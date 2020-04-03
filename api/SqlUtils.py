@@ -1,7 +1,8 @@
 import json
-
+import traceback
 from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question
+from werkzeug.security import generate_password_hash
 
 
 def to_dict(list1):#util function
@@ -10,9 +11,9 @@ def to_dict(list1):#util function
         r.append(item.to_dict())
     return r
 
-def search(key,table):#key is a json variable used to search required row in target table
+def search(key,table):#key is a dict variable used to search required row in target table
     try:
-        key = json.loads(key)
+        # key = json.loads(key)
         table = table.lower()
         r=[]
         if table == "customer":
@@ -28,10 +29,11 @@ def search(key,table):#key is a json variable used to search required row in tar
         elif table == "operation":
             r = Operation.query.filter_by(**key).all()
         else:
-            return [0]
+            return 0
         return to_dict(r)
     except BaseException:
-        return [0]
+        traceback.print_exc()
+        return 0
 
 def searchAll(table):#select * from table
     try:
@@ -50,14 +52,16 @@ def searchAll(table):#select * from table
         elif table == "operation":
             r = Operation.query.all()
         else:
-            return [0]
+            return 0
         return to_dict(r)
     except BaseException:
-        return [0]
+        traceback.print_exc()
+        return 0
 
 def insert(data,table):#data is a json object
     try:
         data=json.loads(data)
+        data["password_hash"]=generate_password_hash(data["password_hash"])
         table=table.lower()
         if table=="customer":
             db.session.add(Customer(**data))
@@ -76,6 +80,7 @@ def insert(data,table):#data is a json object
         db.session.commit()
         return 1
     except BaseException:
+        traceback.print_exc()
         return 0
 
 def delete(key,table):#key is a json variable used to search required row in target table
@@ -102,6 +107,7 @@ def delete(key,table):#key is a json variable used to search required row in tar
         db.session.commit()
         return 1
     except BaseException:
+        traceback.print_exc()
         return 0
 
 def modify(key,data,table):#key is a json variable used to search required row in target table,data is the modifed data
@@ -126,4 +132,5 @@ def modify(key,data,table):#key is a json variable used to search required row i
         db.session.commit()
         return 1
     except BaseException:
+        traceback.print_exc()
         return 0
