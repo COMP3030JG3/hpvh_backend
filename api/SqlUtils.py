@@ -60,7 +60,7 @@ def searchAll(table):#select * from table
 
 def insert(data,table):#data is a json object
     try:
-        data=json.loads(data)
+        # data=json.loads(data)
         data["password_hash"]=generate_password_hash(data["password_hash"])
         table=table.lower()
         if table=="customer":
@@ -85,7 +85,7 @@ def insert(data,table):#data is a json object
 
 def delete(key,table):#key is a json variable used to search required row in target table
     try:
-        key = json.loads(key)
+        # key = json.loads(key)
         table = table.lower()
         items=[]
         if table == "customer":
@@ -112,7 +112,7 @@ def delete(key,table):#key is a json variable used to search required row in tar
 
 def modify(key,data,table):#key is a json variable used to search required row in target table,data is the modifed data
     try:
-        key = json.loads(key)
+        # key = json.loads(key)
         data = json.loads(data)
         table = table.lower()
         if table == "customer":
