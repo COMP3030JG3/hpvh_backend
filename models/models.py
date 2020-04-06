@@ -52,6 +52,7 @@ class Appointment(db.Model):
     description = db.Column(db.String(5000))
     image_Path = db.Column(db.String(500))
     surgery_time = db.Column(db.DateTime, index=True)
+    appointment_date=db.Column(db.DateTime, index=True)
 
     def __repr__(self):
         return '<Appointment {}>'.format(self.id)
