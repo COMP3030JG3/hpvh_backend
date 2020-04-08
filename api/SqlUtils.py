@@ -113,7 +113,7 @@ def delete(key,table):#key is a json variable used to search required row in tar
 def modify(key,data,table):#key is a json variable used to search required row in target table,data is the modifed data
     try:
         # key = json.loads(key)
-        data = json.loads(data)
+        # data = json.loads(data)
         table = table.lower()
         if table == "customer":
             Customer.query.filter_by(**key).update(data)

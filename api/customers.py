@@ -72,19 +72,63 @@ def appointment_create():
     else:
         return status(4103,'failed to create appointment')
 
+@app.route('/api/customer/logout', methods=['GET'])
+@auth.login_required
+def user_logout():
+    # 前端的数据不再带有 token ,舍弃那个header即可
+    return status(200,'logout success')
 
-###--------------------已完成---------------------------####
+@app.route('/api/customer/appointment/<int:id>',methods = ['GET'])
+@auth.login_required
+def user_appointment_get(id):
+    
+    # 获得用户信息
+    current_customer = getCustomer()
 
+    if id == 0:   #0 表示获得所有 该用户的appointment
+        appointments = DBUtil.search({'customer_id':current_customer['id']},'appointment')        
+    else:         #非0  获得该用户的某个appointment
+        appointments = DBUtil.search({'customer_id':current_customer['id'],'id':id},'appointment')
+    
+    if appointments:
+        return status(200,'get appointment successfully',appointments)
+    else:      
+        return status(404)  #如果没有该appointment   或   搜索出错
 
-# @app.route('/api/customer/logout', methods=['GET'])
-# @user_login_required
-# def user_logout():
-#     session.pop('user_session')
-#     return status(200,'logout success')
+@app.route('/api/customer/profile/<int:id>',methods = ['GET'])
+@auth.login_required
+def user_profile_get(id):
 
-# @app.route('/api/customer/getinfo', methods=['GET'])
-# @user_login_required
-# def user_getinfo():
+    #获取用户信息
+    current_customer = getCustomer()
+    if current_customer['id'] != id:             #避免获得别人的信息
+        return status(401)
 
-#     user = User.query.filter_by(username=session.get('user_session')).first()
-#     return status(200,'get user data success',user.to_dict())
+    profile = DBUtil.search({'id':current_customer['id']},'customer')
+    
+    if profile:
+        return status(200,'get profile successfully',profile)
+    else:
+        return status(404)
+
+@app.route('/api/customer/profile/modify/<int:id>',methods = ['POST'])
+@auth.login_required
+def user_profile_modify(id):
+
+    #获取用户信息
+    current_customer = getCustomer()
+    if current_customer['id'] != id:             #避免获得别人的信息
+        return status(401)
+
+    profile_res = request.get_json()
+
+    profile = DBUtil.search({'id':current_customer['id']},'customer')
+    
+    if profile:
+        success = DBUtil.modify({'id':id},profile_res,'customer')
+        if success:
+            return status(201,'update profile successfully')
+        else:
+            return status(403,'update profile fails')
+    else:
+        return status(404)

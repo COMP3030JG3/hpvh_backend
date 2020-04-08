@@ -1,8 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # do not push  __pycache__  &  database
-/__pycache__/
-/models/database.db
+__pycache__/
+models/database.db
 
 
 #dependencies

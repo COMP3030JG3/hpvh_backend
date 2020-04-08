@@ -54,3 +54,86 @@ def employee_login():
                 #     "msg": "Login success",
                 #     "token": {"user_id":user_id,"identify":"employee"}
                 # }
+
+@app.route('/api/employee/logout', methods=['GET'])
+@auth.login_required
+def employee_logout():
+    # 前端的数据不再带有 token ,舍弃那个header即可
+    return status(200,'logout success')
+
+
+@app.route('/api/employee/appointment/<int:id>',methods = ['GET'])
+@auth.login_required
+def employee_appointment_get(id):
+    
+    if id == 0:   #0 表示获得所有
+        appointments = DBUtil.searchAll('appointment')        
+    else:         #非0  获得某个appointment
+        appointments = DBUtil.search({'id':id},'appointment')
+    
+    if appointments:
+        return status(200,'get appointment successfully',appointments)
+    else:      
+        return status(404)  #如果没有该appointment   或   搜索出错
+
+
+@app.route('/api/employee/appointment/modify/<int:id>',methods = ['POST'])             #  update 传过来的数据是什么样的
+@auth.login_required
+def employee_appointment_modify(id):
+    
+    appointment = DBUtil.search({'id':id},'appointment')
+    
+    appointment_res = request.get_json()
+
+    print(appointment_res)
+    print('----------')
+    print(id)
+
+    if not appointment:
+        return status(404)
+    else:
+        success = DBUtil.modify({'id':id},appointment_res,'appointment')       # key / data / table
+        if not success:
+            return status(403,'update fails')
+
+    return status(201,'update successfully')
+
+
+
+@app.route('/api/employee/profile/<int:id>',methods = ['GET'])
+@auth.login_required
+def employee_profile_get(id):
+
+    #获取用户信息
+    current_employee = getEmployee()
+    if current_employee['id'] != id:             #避免获得别人的信息
+        return status(401)
+
+    profile = DBUtil.search({'id':current_employee['id']},'employee')
+    
+    if profile:
+        return status(200,'get profile successfully',profile)
+    else:
+        return status(404)
+
+@app.route('/api/employee/profile/modify/<int:id>',methods = ['POST'])
+@auth.login_required
+def employee_profile_modify(id):
+
+    #获取用户信息
+    current_employee = getEmployee()
+    if current_employee['id'] != id:             #避免获得别人的信息
+        return status(401)
+
+    profile_res = request.get_json()
+
+    profile = DBUtil.search({'id':current_employee['id']},'employee')
+    
+    if profile:
+        success = DBUtil.modify({'id':id},profile_res,'employee')
+        if success:
+            return status(201,'update profile successfully')
+        else:
+            return status(403,'update profile fails')
+    else:
+        return status(404)
