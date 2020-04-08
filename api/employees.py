@@ -26,7 +26,7 @@ def employee_register():
         return_status = DBUtil.insert(register_res,"employee")    
         if return_status == 0:                     #插入失败
             return status(4103,'data insertion failure')
-    return status(200,'register success')
+    return status(201,'register success')
 
 
 @app.route('/api/employee/login', methods=['POST'])

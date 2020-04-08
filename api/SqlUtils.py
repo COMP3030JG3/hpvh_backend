@@ -75,10 +75,14 @@ def insert(data,table):#data is a json object
         # data=json.loads(data)
         table=table.lower()
         if table=="customer":
-            data["password_hash"] = generate_password_hash(data["password_hash"])
+            if "password_hash" in data:
+                password_hash = generate_password_hash(str(data["password_hash"]))
+                data["password_hash"]= password_hash
             db.session.add(Customer(**data))
         elif table=="employee":
-            data["password_hash"] = generate_password_hash(data["password_hash"])
+            if "password_hash" in data:
+                password_hash = generate_password_hash(str(data["password_hash"]))
+                data["password_hash"]= password_hash
             db.session.add(Employee(**data))
         elif table == "appointment":
             db.session.add(Appointment(**data))
