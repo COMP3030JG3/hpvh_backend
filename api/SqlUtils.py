@@ -73,11 +73,12 @@ def searchAll(table):#select * from table
 def insert(data,table):#data is a json object
     try:
         # data=json.loads(data)
-        data["password_hash"]=generate_password_hash(data["password_hash"])
         table=table.lower()
         if table=="customer":
+            data["password_hash"] = generate_password_hash(data["password_hash"])
             db.session.add(Customer(**data))
         elif table=="employee":
+            data["password_hash"] = generate_password_hash(data["password_hash"])
             db.session.add(Employee(**data))
         elif table == "appointment":
             db.session.add(Appointment(**data))
