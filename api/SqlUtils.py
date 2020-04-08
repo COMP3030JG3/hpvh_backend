@@ -2,7 +2,7 @@ import json
 import traceback
 from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash,check_password_hash
 
 
 def to_dict(list1):#util function
@@ -15,10 +15,22 @@ def search(key,table):#key is a dict variable used to search required row in tar
     try:
         # key = json.loads(key)
         table = table.lower()
+        # if (table == "customer" or table == "employee") and ("password_hash" in key):
+        #     if check_password_hash(,key["password_hash"])
         r=[]
         if table == "customer":
+            if "password_hash" in key:
+                password=key.pop("password_hash")
+                r = Customer.query.filter_by(**key).first()
+                if not check_password_hash(r.password_hash, password):
+                    return 0
             r=Customer.query.filter_by(**key).all()
         elif table == "employee":
+            if "password_hash" in key:
+                password=key.pop("password_hash")
+                r = Employee.query.filter_by(**key).first()
+                if not check_password_hash(r.password_hash, password):
+                    return 0
             r = Employee.query.filter_by(**key).all()
         elif table == "appointment":
             r = Appointment.query.filter_by(**key).all()
