@@ -5,11 +5,28 @@ from api.utils import status, auth , generate_token , getCustomer
 import time
 import api.SqlUtils as DBUtil
 
-#在每个需要判断token的函数下面调用 login_required
+# 所有的modify似乎不需要提供id     √
+# 修改密码, 登出时logout失效, 通过加一个key??
+# 通过token判断当前用户    √
+# getInfo   √
+# remember
+# 增加一个session的数据库
+#  total / index / count / 
+
+# ------------------------------------------------------------------------------------------------------------------------------------#
+
+@app.route('/api/customer/getinfo',methods=['GET'])
+@auth.login_required
+def user_info():
+    customer = getCustomer()
+    info = {"id":customer.get("id")}
+    return status(200,data = info)
 
 @app.route('/api/customer/register', methods=['POST']) 
 def user_register():
     
+    # 避免瞎注册  正则表达式
+
     register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
 
     # password = register_res.pop('password')
@@ -24,7 +41,7 @@ def user_register():
         return_status = DBUtil.insert(register_res,"customer")    
         if return_status == 0:                     #插入失败
             return status(4103,'data insertion failure')
-    return status(200,'register success')
+    return status(201,'register success')
 
 
 @app.route('/api/customer/login', methods=['POST'])
@@ -40,17 +57,18 @@ def user_login():
     # if username == None or password == None:             #情况不存在吧,前端应该要先判断了是否非空
     #     return status(4103,"Error parament")
 
-    user = DBUtil.search(customer,'customer')[0]       #返回的是一个数组, [0] 获得第一个
+    user = DBUtil.search(customer,'customer')       #返回的是一个数组, [0] 获得第一个
 
     if not user:
         return status(4103,'error username or password')
     else:
-        user_id = user.get('id')
+        user_id = user[0].get('id')
         return generate_token(user_id,"customer")
                 # {
                 #     "code": 200,
                 #     "msg": "Login success",
-                #     "token": {"user_id":user_id,"identify":"customer"}
+                #     "token": {"fajdsfadskfjasldfjdas"}
+                #     "user_id":{id}
                 # }
 
 @app.route('/api/customer/appointment/create',methods=['POST'])
@@ -62,7 +80,7 @@ def appointment_create():
 
     # 获得 customer 信息
     current_customer = getCustomer()
-
+    
     # 将customer_id 加入到 字典中
     customer_id = current_customer.get('id')
     appointment_res["customer_id"] = customer_id
@@ -78,12 +96,15 @@ def user_logout():
     # 前端的数据不再带有 token ,舍弃那个header即可
     return status(200,'logout success')
 
-@app.route('/api/customer/appointment/<int:id>',methods = ['GET'])
+# @app.route('/api/customer/appointment/<int:id>',methods = ['GET'])     
+@app.route('/api/customer/appointment/<int:id>',methods = ['GET']) 
 @auth.login_required
-def user_appointment_get(id):
+def user_appointment_get(id):      #id是appointment的id
     
     # 获得用户信息
     current_customer = getCustomer()
+    # if current_customer['id'] != id:             #避免获得别人的信息
+    #     return status(401)
 
     if id == 0:   #0 表示获得所有 该用户的appointment
         appointments = DBUtil.search({'customer_id':current_customer['id']},'appointment')        
@@ -91,18 +112,20 @@ def user_appointment_get(id):
         appointments = DBUtil.search({'customer_id':current_customer['id'],'id':id},'appointment')
     
     if appointments:
-        return status(200,'get appointment successfully',appointments)
+        return status(200,'get appointment successfully',appointments)       # appointment 是一个数组
     else:      
         return status(404)  #如果没有该appointment   或   搜索出错
 
-@app.route('/api/customer/profile/<int:id>',methods = ['GET'])
+# @app.route('/api/customer/profile/<int:id>',methods = ['GET'])
+@app.route('/api/customer/profile',methods = ['GET'])        #不需要id了其实
 @auth.login_required
-def user_profile_get(id):
+# def user_profile_get(id):
+def user_profile_get():
 
     #获取用户信息
     current_customer = getCustomer()
-    if current_customer['id'] != id:             #避免获得别人的信息
-        return status(401)
+    # if current_customer['id'] != id:             #避免获得别人的信息
+    #     return status(401)
 
     profile = DBUtil.search({'id':current_customer['id']},'customer')
     
@@ -111,14 +134,15 @@ def user_profile_get(id):
     else:
         return status(404)
 
-@app.route('/api/customer/profile/modify/<int:id>',methods = ['POST'])
+# @app.route('/api/customer/profile/modify/<int:id>',methods = ['POST'])
+@app.route('/api/customer/profile/modify',methods = ['POST'])                #自动修改当前token的用户
 @auth.login_required
-def user_profile_modify(id):
-
+# def user_profile_modify(id):
+def user_profile_modify():
     #获取用户信息
     current_customer = getCustomer()
-    if current_customer['id'] != id:             #避免获得别人的信息
-        return status(401)
+    # if current_customer['id'] != id:             #避免获得别人的信息
+    #     return status(401)
 
     profile_res = request.get_json()
 
@@ -132,3 +156,21 @@ def user_profile_modify(id):
             return status(403,'update profile fails')
     else:
         return status(404)
+
+@app.route('/api/customer/operation/<int:id>',methods = ['GET'])     #此id是appointment的 
+@auth.login_required
+def user_operation_get(id):
+    
+    # 获得用户信息
+    current_customer = getCustomer()
+
+    if id == 0:   #0 表示获得所有 该用户的operation
+        appointments = DBUtil.search({'customer_id':current_customer['id']},'operation')        
+    else:         #非0  获得该用户的某个operation
+        appointments = DBUtil.search({'customer_id':current_customer['id'],'id':id},'operation')
+    
+    if appointments:
+        return status(200,'get operation successfully',appointments)
+    else:      
+        return status(404)  #如果没有该operation   或   搜索出错
+
