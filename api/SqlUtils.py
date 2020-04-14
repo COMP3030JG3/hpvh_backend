@@ -4,12 +4,17 @@ from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question
 from werkzeug.security import generate_password_hash,check_password_hash
 
+APPOINTMENT_LIMIT=3
 
 def to_dict(list1):#util function
     r = []
     for item in list1:
         r.append(item.to_dict())
-    return r
+
+    if len(r)==0:
+        return None
+    else:
+        return r
 
 def search(key,table):#key is a dict variable used to search required row in target table
     try:
@@ -70,7 +75,7 @@ def searchAll(table):#select * from table
         traceback.print_exc()
         return 0
 
-def insert(data,table):#data is a json object
+def insert(data,table):#data is a dict object
     try:
         # data=json.loads(data)
         table=table.lower()
@@ -85,7 +90,19 @@ def insert(data,table):#data is a json object
                 data["password_hash"]= password_hash
             db.session.add(Employee(**data))
         elif table == "appointment":
-            db.session.add(Appointment(**data))
+            d={}
+            d["appointment_date"]=data["appointment_date"]
+            appointments=search(d,"appointment")
+            if appointments is not None:
+                maxId=len(appointments)
+                # print(maxId)
+                if maxId < APPOINTMENT_LIMIT:
+                    data["id"] = maxId + 1
+                    db.session.add(Appointment(**data))
+                else:
+                    return 0
+            else:
+                db.session.add(Appointment(**data))
         elif table == "answer":
             db.session.add(Answer(**data))
         elif table == "question":
@@ -100,7 +117,7 @@ def insert(data,table):#data is a json object
         traceback.print_exc()
         return 0
 
-def delete(key,table):#key is a json variable used to search required row in target table
+def delete(key,table):#key is a dict variable used to search required row in target table
     try:
         # key = json.loads(key)
         table = table.lower()
@@ -127,7 +144,7 @@ def delete(key,table):#key is a json variable used to search required row in tar
         traceback.print_exc()
         return 0
 
-def modify(key,data,table):#key is a json variable used to search required row in target table,data is the modifed data
+def modify(key,data,table):#key is a dict variable used to search required row in target table,data is the modifed data
     try:
         # key = json.loads(key)
         # data = json.loads(data)

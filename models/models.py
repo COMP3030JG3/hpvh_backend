@@ -6,6 +6,7 @@ from datetime import datetime
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
+    fullname = db.Column(db.String(64), index=True)
     password_hash = db.Column(db.String(128))
     email = db.Column(db.String(120), index=True, unique=True)
     phone_number = db.Column(db.String(11),index=True,unique=True)
@@ -42,8 +43,8 @@ class Employee(db.Model):
                 "password_hash":self.password_hash}
 
 
-class Appointment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class Appointment(db.Model):#id is not primary key, do not have primary key in this table
+    id = db.Column(db.Integer)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
     pet_name = db.Column(db.String(64))
     pet_gender = db.Column(db.String(10),index=True)
@@ -53,6 +54,9 @@ class Appointment(db.Model):
     image_Path = db.Column(db.String(500))
     surgery_time = db.Column(db.DateTime, index=True)
     appointment_date=db.Column(db.DateTime, index=True)
+    date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+    __table_args__=(db.PrimaryKeyConstraint("id","appointment_date",name="appointment_registration"),)
 
     def __repr__(self):
         return '<Appointment {}>'.format(self.id)
