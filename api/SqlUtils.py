@@ -168,3 +168,26 @@ def modify(key,data,table):#key is a dict variable used to search required row i
     except BaseException:
         traceback.print_exc()
         return 0
+
+def searchTimeSpan(key,table):#The key format should be {"column":"...","start":datetime.datetime(yaer,month,day),"end":datetime.datetime(yaer,month,day)}
+    try:
+        table = table.lower()
+        r=[]
+        if table == "customer":
+            r=Customer.query.filter(getattr(Customer,key["column"]) >= key["start"]).filter(getattr(Customer,key["column"]) <= key["end"])
+        elif table == "employee":
+            r=Employee.query.filter(getattr(Employee,key["column"]) >= key["start"]).filter(getattr(Employee,key["column"]) <= key["end"])
+        elif table == "appointment":
+            r=Appointment.query.filter(getattr(Appointment,key["column"]) >= key["start"]).filter(getattr(Appointment,key["column"]) <= key["end"])
+        elif table == "answer":
+            r=Answer.query.filter(getattr(Answer,key["column"]) >= key["start"]).filter(getattr(Answer,key["column"]) <= key["end"])
+        elif table == "question":
+            r=Question.query.filter(getattr(Question,key["column"]) >= key["start"]).filter(getattr(Question,key["column"]) <= key["end"])
+        elif table == "operation":
+            r=Operation.query.filter(getattr(Operation,key["column"]) >= key["start"]).filter(getattr(Operation,key["column"]) <= key["end"])
+        else:
+            return 0
+        return to_dict(r)
+    except BaseException:
+        traceback.print_exc()
+        return 0
