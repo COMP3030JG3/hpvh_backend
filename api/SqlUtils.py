@@ -1,10 +1,16 @@
-import json
+import os
+import matplotlib.image as mp
 import traceback
 from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question
 from werkzeug.security import generate_password_hash,check_password_hash
 
 APPOINTMENT_LIMIT=3
+
+# get path config
+temp=os.path.dirname(__file__).split("/")
+temp.pop()
+IMAGE_DIR="/".join(temp) + "/uploaded_image"
 
 def to_dict(list1):#util function
     r = []
@@ -38,7 +44,13 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     return 0
             r = Employee.query.filter_by(**key).all()
         elif table == "appointment":
-            r = Appointment.query.filter_by(**key).all()
+            appointments = Appointment.query.filter_by(**key).all()
+            r=[]
+            for appointment in appointments:
+                temp = appointment.__dict__
+                temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
+                r.append(temp)
+            return r
         elif table == "answer":
             r = Answer.query.filter_by(**key).all()
         elif table == "question":
@@ -61,7 +73,12 @@ def searchAll(table):#select * from table
         elif table == "employee":
             r = Employee.query.all()
         elif table == "appointment":
-            r = Appointment.query.all()
+            appointments = Appointment.query.all()
+            for appointment in appointments:
+                temp = appointment.__dict__
+                temp["pet_image_path"] = mp.imread(temp["pet_image_path"])
+                r.append(temp)
+            return r
         elif table == "answer":
             r = Answer.query.all()
         elif table == "question":
@@ -98,6 +115,10 @@ def insert(data,table):#data is a dict object
                 # print(maxId)
                 if maxId < APPOINTMENT_LIMIT:
                     data["id"] = maxId + 1
+                    if data.get("pet_image_path") is not None:
+                        data["pet_image_path"].save(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg")
+                        # mp.imsave(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg",data["pet_image_path"])
+                        data["pet_image_path"] = IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg"
                     db.session.add(Appointment(**data))
                 else:
                     return 0
@@ -128,6 +149,8 @@ def delete(key,table):#key is a dict variable used to search required row in tar
             items = Employee.query.filter_by(**key).all()
         elif table == "appointment":
             items = Appointment.query.filter_by(**key).all()
+            for appointment in items:
+                os.remove(appointment.pet_image_path)
         elif table == "answer":
             items = Answer.query.filter_by(**key).all()
         elif table == "question":
@@ -191,3 +214,6 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
     except BaseException:
         traceback.print_exc()
         return 0
+
+if __name__ == '__main__':
+    print(IMAGE_DIR)

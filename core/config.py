@@ -13,4 +13,3 @@ class Config(object):
         'AVATAR': os.path.join(basedir, '../res/img/avatar'),
         'PET_PHOTO': os.path.join(basedir, '../res/img/petphoto')
         }
-
