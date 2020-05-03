@@ -73,11 +73,17 @@ def employee_logout():
 @auth.login_required
 def employee_appointment_get(id):
     
-    if id == 0:   #0 表示获得所有
-        appointments = DBUtil.searchAll('appointment')        
-    else:         #非0  获得某个appointment
-        appointments = DBUtil.search({'id':id},'appointment')
+    url = request.url
     
+    para = re.findall(r'([^?&]*?)=',url)
+    value = re.findall(r'=([^?&]*)',url)
+
+    inpu = {}
+    inpu['index'] = id
+    for i in range(0,len(para)):
+    inpu[para[i]] = value[i]
+    # inpu['customer_id'] = current_customer['id']     #不需要customer id
+    appointments = DBUtil.search(inpu,'appointment')   
     if appointments:
         return status(200,'get appointment successfully',appointments)
     else:      

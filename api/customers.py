@@ -4,6 +4,7 @@ from flask import Flask, session, request
 from api.utils import status, auth , generate_token , getCustomer
 import time
 import api.SqlUtils as DBUtil
+import re
 
 # 所有的modify似乎不需要提供id     √
 # 修改密码, 登出时logout失效, 通过加一个key??
@@ -96,20 +97,25 @@ def user_logout():
     # 前端的数据不再带有 token ,舍弃那个header即可
     return status(200,'logout success')
 
-# @app.route('/api/customer/appointment/<int:id>',methods = ['GET'])     
 @app.route('/api/customer/appointment/<int:id>',methods = ['GET']) 
 @auth.login_required
-def user_appointment_get(id):      #id是appointment的id
+def user_appointment_get(id):      #id是index的id
     
-    # 获得用户信息
-    current_customer = getCustomer()
-    # if current_customer['id'] != id:             #避免获得别人的信息
-    #     return status(401)
+    url  = request.url      # request.url: 返回带?，request.base_url返回不带?的
+    
+    current_customer = getCustomer()      # 获得用户信息
 
-    if id == 0:   #0 表示获得所有 该用户的appointment
-        appointments = DBUtil.search({'customer_id':current_customer['id']},'appointment')        
-    else:         #非0  获得该用户的某个appointment
-        appointments = DBUtil.search({'customer_id':current_customer['id'],'id':id},'appointment')
+    para = re.findall(r'([^?&]*?)=',url)
+    value = re.findall(r'=([^?&]*)',url)
+
+    inpu = {}
+    inpu['index'] = id
+    inpu['customer_id'] = current_customer['id']
+    for i in range(0,len(para)):
+        inpu[para[i]] = value[i]
+    
+    print(inpu)
+    appointments = DBUtil.search(inpu,'appointment')        
     
     if appointments:
         return status(200,'get appointment successfully',appointments)       # appointment 是一个数组
