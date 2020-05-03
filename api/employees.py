@@ -81,11 +81,18 @@ def employee_appointment_get(id):
     inpu = {}
     inpu['index'] = id
     for i in range(0,len(para)):
-    inpu[para[i]] = value[i]
-    # inpu['customer_id'] = current_customer['id']     #不需要customer id
+        inpu[para[i]] = value[i]
+
     appointments = DBUtil.search(inpu,'appointment')   
+
+    all_appoint = DBUtil.searchAll('appointment')   
+    return_appointment = {}
+    return_appointment["total"] = 0 if all_appoint==0 else len(all_appoint)
+    return_appointment["count"] = 0 if appointments==0 else len(appointments)
+    return_appointment["index"] = id
+    return_appointment["item"] = appointments
     if appointments:
-        return status(200,'get appointment successfully',appointments)
+        return status(200,'get appointment successfully',return_appointment)
     else:      
         return status(404)  #如果没有该appointment   或   搜索出错
 
