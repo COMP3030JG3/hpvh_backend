@@ -24,10 +24,12 @@ def to_dict(list1):#util function
 
 def search(key,table):#key is a dict variable used to search required row in target table
     try:
-        # key = json.loads(key)
+        # preprocessing
         table = table.lower()
-        # if (table == "customer" or table == "employee") and ("password_hash" in key):
-        #     if check_password_hash(,key["password_hash"])
+        if key.get("index") is not None:
+            index = key.pop("index")
+        else:
+            index = 1
         r=[]
         if table == "customer":
             if "password_hash" in key:
@@ -35,28 +37,29 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 r = Customer.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            r=Customer.query.filter_by(**key).all()
+            r=Customer.query.filter_by(**key)[15*index-15:15*index]
         elif table == "employee":
             if "password_hash" in key:
                 password=key.pop("password_hash")
                 r = Employee.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            r = Employee.query.filter_by(**key).all()
+            r = Employee.query.filter_by(**key)[15*index-14:15*index]
         elif table == "appointment":
-            appointments = Appointment.query.filter_by(**key).all()
+            appointments = Appointment.query.filter_by(**key)[15*index-14:15*index]
             r=[]
             for appointment in appointments:
                 temp = appointment.__dict__
-                temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
+                if temp.get("pet_image_path") is not None:
+                    temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
                 r.append(temp)
             return r
         elif table == "answer":
-            r = Answer.query.filter_by(**key).all()
+            r = Answer.query.filter_by(**key)[15*index-14:15*index]
         elif table == "question":
-            r = Question.query.filter_by(**key).all()
+            r = Question.query.filter_by(**key)[15*index-14:15*index]
         elif table == "operation":
-            r = Operation.query.filter_by(**key).all()
+            r = Operation.query.filter_by(**key)[15*index-14:15*index]
         else:
             return 0
         return to_dict(r)
@@ -92,7 +95,8 @@ def searchAll(table):#select * from table
         traceback.print_exc()
         return 0
 
-def insert(data,table):#data is a dict object
+def insert(data,table):#data is a dict object,
+    # constraints:appointment must be insert with appointment_date
     try:
         # data=json.loads(data)
         table=table.lower()
@@ -109,8 +113,8 @@ def insert(data,table):#data is a dict object
         elif table == "appointment":
             d={}
             d["appointment_date"]=data["appointment_date"]
-            appointments=search(d,"appointment")
-            if appointments is not None:
+            appointments=Appointment.query.filter_by(**d).all()
+            if len(appointments) != 0:
                 maxId=len(appointments)
                 # print(maxId)
                 if maxId < APPOINTMENT_LIMIT:
@@ -123,7 +127,7 @@ def insert(data,table):#data is a dict object
                 else:
                     return 0
             else:
-                db.session.add(Appointment(**data))
+                db.session.add(Appointment(id=1,**data))
         elif table == "answer":
             db.session.add(Answer(**data))
         elif table == "question":
