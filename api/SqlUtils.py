@@ -30,6 +30,11 @@ def search(key,table):#key is a dict variable used to search required row in tar
             index = key.pop("index")
         else:
             index = None
+        if key.get("orderBy") is not None:
+            orderBy = key.pop("orderBy")
+        else:
+            orderBy = None
+
         r=[]
         if table == "customer":
             if "password_hash" in key:
@@ -54,9 +59,9 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
                 r.append(temp)
             if index is None:
-                return r,len(r)
+                return sorted(r,key=lambda item:item[orderBy],reverse=True),len(r)
             else:
-                return r[(index-1)*15:index*15],len(r)
+                return sorted(r[(index-1)*15:index*15],key=lambda item:item[orderBy],reverse=True),len(r)
         elif table == "answer":
             r = Answer.query.filter_by(**key).all()
         elif table == "question":
@@ -175,6 +180,7 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         return 0
 
 def modify(key,data,table):#key is a dict variable used to search required row in target table,data is the modifed data
+    # only support modify one row at a time
     try:
         # key = json.loads(key)
         # data = json.loads(data)
@@ -184,6 +190,11 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         elif table == "employee":
             Employee.query.filter_by(**key).update(data)
         elif table == "appointment":
+            if data.get("pet_image_path") is not None:
+                pet_image_path = Appointment.query.filter_by(**key).first().pet_image_path
+                os.remove(pet_image_path)
+                data["pet_image_path"].save(pet_image_path)
+                data.pop("pet_image_path")
             Appointment.query.filter_by(**key).update(data)
         elif table == "answer":
             Answer.query.filter_by(**key).update(data)
