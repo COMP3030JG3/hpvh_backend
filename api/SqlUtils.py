@@ -29,7 +29,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
         if key.get("index") is not None:
             index = key.pop("index")
         else:
-            index = 1
+            index = None
         r=[]
         if table == "customer":
             if "password_hash" in key:
@@ -37,29 +37,32 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 r = Customer.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            r=Customer.query.filter_by(**key)[15*index-15:15*index]
+            r=Customer.query.filter_by(**key).all()
         elif table == "employee":
             if "password_hash" in key:
                 password=key.pop("password_hash")
                 r = Employee.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            r = Employee.query.filter_by(**key)[15*index-14:15*index]
+            r = Employee.query.filter_by(**key).all()
         elif table == "appointment":
-            appointments = Appointment.query.filter_by(**key)[15*index-14:15*index]
+            appointments = Appointment.query.filter_by(**key).all()
             r=[]
             for appointment in appointments:
                 temp = appointment.__dict__
                 if temp.get("pet_image_path") is not None:
                     temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
                 r.append(temp)
-            return r
+            if index is None:
+                return r,len(r)
+            else:
+                return r[(index-1)*15:index*15],len(r)
         elif table == "answer":
-            r = Answer.query.filter_by(**key)[15*index-14:15*index]
+            r = Answer.query.filter_by(**key).all()
         elif table == "question":
-            r = Question.query.filter_by(**key)[15*index-14:15*index]
+            r = Question.query.filter_by(**key).all()
         elif table == "operation":
-            r = Operation.query.filter_by(**key)[15*index-14:15*index]
+            r = Operation.query.filter_by(**key).all()
         else:
             return 0
         return to_dict(r)
