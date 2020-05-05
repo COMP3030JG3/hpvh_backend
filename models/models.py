@@ -14,6 +14,7 @@ class Customer(db.Model):
 
     appointments = db.relationship('Appointment', backref='customer', lazy='dynamic')
     questions = db.relationship('Question',backref='questioner',lazy='dynamic')
+    answers = db.relationship('Answer', backref='answerer', lazy='dynamic')
     operations = db.relationship('Operation',backref='owner',lazy='dynamic')
 
     def __repr__(self):
@@ -107,7 +108,8 @@ class Question(db.Model):
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(500))
-    answerer_id = db.Column(db.Integer, db.ForeignKey('employee.id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'))
     date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
     unread = db.Column(db.Boolean,default = False)
