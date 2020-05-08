@@ -14,8 +14,9 @@ class Customer(db.Model):
 
     appointments = db.relationship('Appointment', backref='customer', lazy='dynamic')
     questions = db.relationship('Question',backref='questioner',lazy='dynamic')
-    answers = db.relationship('Answer', backref='answerer', lazy='dynamic')
+    answers = db.relationship('Answer', backref='customer_answerer', lazy='dynamic')
     operations = db.relationship('Operation',backref='owner',lazy='dynamic')
+    pets = db.relationship('Pet',backref='owner',lazy='dynamic')
 
     def __repr__(self):
         return '<Customer {}>'.format(self.username)
@@ -35,7 +36,7 @@ class Employee(db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(128))
 
-    answers = db.relationship('Answer',backref='answerer',lazy='dynamic')
+    answers = db.relationship('Answer',backref='employee_answerer',lazy='dynamic')
 
     def __repr__(self):
         return '<Employee {}>'.format(self.username)
@@ -48,8 +49,9 @@ class Employee(db.Model):
 
 
 class Appointment(db.Model):#id is not primary key, do not have primary key in this table
+    app_primary_key = db.Column(db.Integer,primary_key=True)
     id = db.Column(db.Integer)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'),index=True)
     pet_name = db.Column(db.String(64))
     pet_gender = db.Column(db.String(10),index=True)
     pet_image_path = db.Column(db.String(500))
@@ -65,7 +67,7 @@ class Appointment(db.Model):#id is not primary key, do not have primary key in t
 
     operation = db.relationship('Operation', backref='appointment', lazy='dynamic')
 
-    __table_args__=(db.PrimaryKeyConstraint("id","appointment_date",name="appointment_registration"),)
+    __table_args__=(db.UniqueConstraint("id","appointment_date",name="appointment_registration"),)
 
     def __repr__(self):
         return '<Appointment {}>'.format(self.id)
@@ -90,7 +92,7 @@ class Appointment(db.Model):#id is not primary key, do not have primary key in t
 class Question(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     content = db.Column(db.String(500))
-    questioner_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
+    questioner_id = db.Column(db.Integer, db.ForeignKey('customer.id'),index=True)
     date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     answers = db.relationship('Answer',backref='question',lazy='dynamic')
@@ -108,10 +110,10 @@ class Question(db.Model):
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(500))
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
-    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'),index=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'),index=True)
     date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'),index=True)
     unread = db.Column(db.Boolean,default = False)
 
     def __repr__(self):
@@ -130,13 +132,12 @@ class Operation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
     pet_name = db.Column(db.String(64))
-    pet_detail =  db.Column(db.String(500))
     operation_plan_path = db.Column(db.String(500))
     surgery_cost = db.Column(db.Integer)
     surgery_begin_time = db.Column(db.DateTime, index=True)
     livin_duration = db.Column(db.Integer)
     release_time = db.Column(db.DateTime, index=True)
-    appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'))
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.app_primary_key'),index=True)
 
     def to_dict(self):
         return self.__dict__
@@ -150,6 +151,12 @@ class Operation(db.Model):
         #         "livin_duration": self.livin_duration,
         #         "release_time": self.release_time}
 
+class Pet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('customer.id'),index=True)
+    pet_name = db.Column(db.String(64))
+    pet_gender = db.Column(db.String(10))
+    pet_species = db.Column(db.String(10))
 
-
-
+    def to_dict(self):
+        return self.__dict__

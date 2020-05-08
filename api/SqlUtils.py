@@ -2,7 +2,7 @@ import os
 import matplotlib.image as mp
 import traceback
 from core import db
-from models.models import Customer, Employee, Appointment, Answer, Operation, Question
+from models.models import Customer, Employee, Appointment, Answer, Operation, Question, Pet
 from werkzeug.security import generate_password_hash,check_password_hash
 
 APPOINTMENT_LIMIT=3
@@ -23,6 +23,7 @@ def to_dict(list1):#util function
         return r
 
 def search(key,table):#key is a dict variable used to search required row in target table
+    # when search for the data in answer and question table, it will return the data with the user binded
     try:
         # preprocessing
         table = table.lower()
@@ -63,11 +64,32 @@ def search(key,table):#key is a dict variable used to search required row in tar
             else:
                 return sorted(r[(index-1)*15:index*15],key=lambda item:item[orderBy],reverse=True),len(r)
         elif table == "answer":
-            r = Answer.query.filter_by(**key).all()
+            answers = Answer.query.filter_by(**key).all()
+            for answer in answers:
+                answer_dict = answer.__dict__
+                if answer.customer_id is not None:
+                    answer_dict.update({"user_type":"customer"})
+                    answer_dict.update({"username":answer.customer_answerer.__dict__.get("username")})
+                    answer_dict.update({"user_id":answer_dict.pop("customer_id")})
+                else:
+                    answer_dict.update({"user_type": "employee"})
+                    answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
+                    answer_dict.update({"user_id": answer_dict.pop("employee_id")})
+                r.append(answer_dict)
+            return r
         elif table == "question":
-            r = Question.query.filter_by(**key).all()
+            questions = Question.query.filter_by(**key).all()
+            for question in questions:
+                question_dict = question.__dict__
+                question_dict.update({"user_type":"customer"})
+                question_dict.update({"username":question.questioner.__dict__.get("username")})
+                question_dict.update({"user_id":question_dict.get("questioner_id")})
+                r.append(question_dict)
+            return r
         elif table == "operation":
             r = Operation.query.filter_by(**key).all()
+        elif table == "pet":
+            r = Pet.query.filter_by(**key).all()
         else:
             return 0
         return to_dict(r)
@@ -76,6 +98,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
         return 0
 
 def searchAll(table):#select * from table
+    # when search for the data in answer and question table, it will return the data with the user binded
     try:
         table = table.lower()
         r=[]
@@ -91,11 +114,32 @@ def searchAll(table):#select * from table
                 r.append(temp)
             return r
         elif table == "answer":
-            r = Answer.query.all()
+            answers = Answer.query.all()
+            for answer in answers:
+                answer_dict = answer.__dict__
+                if answer.customer_id is not None:
+                    answer_dict.update({"user_type": "customer"})
+                    answer_dict.update({"username": answer.customer_answerer.__dict__.get("username")})
+                    answer_dict.update({"user_id": answer_dict.pop("customer_id")})
+                else:
+                    answer_dict.update({"user_type": "employee"})
+                    answer_dict.update({"username": answer.employee_answerer.__dict__.get("username")})
+                    answer_dict.update({"user_id": answer_dict.pop("employee_id")})
+                r.append(answer_dict)
+            return r
         elif table == "question":
-            r = Question.query.all()
+            questions = Question.query.all()
+            for question in questions:
+                question_dict = question.__dict__
+                question_dict.update({"user_type": "customer"})
+                question_dict.update({"username": question.questioner.__dict__.get("username")})
+                question_dict.update({"user_id": question_dict.get("questioner_id")})
+                r.append(question_dict)
+            return r
         elif table == "operation":
             r = Operation.query.all()
+        elif table == "pet":
+            r = Pet.query.all()
         else:
             return 0
         return to_dict(r)
@@ -131,10 +175,14 @@ def insert(data,table):#data is a dict object,
                         data["pet_image_path"].save(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg")
                         # mp.imsave(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg",data["pet_image_path"])
                         data["pet_image_path"] = IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg"
+                    db.session.add(Pet(owner_id=data.get("customer"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
                     return 0
             else:
+                db.session.add(
+                    Pet(owner_id=data.get("customer"), pet_name=data.get("pet_name"), pet_gender=data.get("pet_gender"),
+                        pet_species=data.get("species")))
                 db.session.add(Appointment(id=1,**data))
         elif table == "answer":
             db.session.add(Answer(**data))
