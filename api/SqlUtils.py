@@ -1,3 +1,4 @@
+import datetime
 import os
 import matplotlib.image as mp
 import traceback
@@ -163,6 +164,9 @@ def insert(data,table):#data is a dict object,
                 data["password_hash"]= password_hash
             db.session.add(Employee(**data))
         elif table == "appointment":
+            # preprocessing, the data application logic passed is not standard
+            data["appointment_date"] = datetime.datetime.strptime(data["appointment_date"],'%Y-%m-%d %H:%M:%S')
+
             d={}
             d["appointment_date"]=data["appointment_date"]
             appointments=Appointment.query.filter_by(**d).all()
@@ -185,10 +189,18 @@ def insert(data,table):#data is a dict object,
                         pet_species=data.get("species")))
                 db.session.add(Appointment(id=1,**data))
         elif table == "answer":
+            user_id = data.pop("user_id")
+            user_type = data.pop("user_type")
+            if user_type.lower() == "customer":
+                data.update({"customer_id":user_id})
+            else:
+                data.update({"employee_id": user_id})
             db.session.add(Answer(**data))
         elif table == "question":
             db.session.add(Question(**data))
         elif table == "operation":
+            data["surgery_begin_time"] = datetime.datetime.strptime(data["surgery_begin_time"], '%Y-%m-%d %H:%M:%S')
+            data["release_time"] = datetime.datetime.strptime(data["release_time"], '%Y-%m-%d %H:%M:%S')
             db.session.add(Operation(**data))
         else:
             return 0

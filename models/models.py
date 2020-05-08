@@ -34,6 +34,7 @@ class Customer(db.Model):
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
+    level = db.Column(db.String(30))
     password_hash = db.Column(db.String(128))
 
     answers = db.relationship('Answer',backref='employee_answerer',lazy='dynamic')
@@ -132,7 +133,7 @@ class Operation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
     pet_name = db.Column(db.String(64))
-    operation_plan_path = db.Column(db.String(500))
+    operation_plan = db.Column(db.String(5000))
     surgery_cost = db.Column(db.Integer)
     surgery_begin_time = db.Column(db.DateTime, index=True)
     livin_duration = db.Column(db.Integer)
