@@ -84,7 +84,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
                     answer_dict.update({"user_id": answer_dict.pop("employee_id")})
                 r.append(answer_dict)
-            return r[(index-1)*15:index*15]
+            return r[(index-1)*15:index*15],len(r)
         elif table == "question":
             questions = Question.query.filter_by(**key).all()
             for question in questions:
@@ -93,14 +93,14 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 question_dict.update({"username":question.questioner.__dict__.get("username")})
                 question_dict.update({"user_id":question_dict.get("questioner_id")})
                 r.append(question_dict)
-            return r[(index-1)*15:index*15]
+            return r[(index-1)*15:index*15],len(r)
         elif table == "operation":
             r = Operation.query.filter_by(**key).all()
         elif table == "pet":
             r = Pet.query.filter_by(**key).all()
         else:
             return 0
-        return to_dict(r)[(index-1)*15:index*15]
+        return to_dict(r)[(index-1)*15:index*15],len(r)
     except BaseException:
         traceback.print_exc()
         return 0
