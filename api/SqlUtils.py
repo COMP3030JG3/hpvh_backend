@@ -31,7 +31,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
         if key.get("index") is not None:
             index = key.pop("index")
         else:
-            index = None
+            index = 1
         if key.get("orderBy") is not None:
             orderBy = key.pop("orderBy")
         else:
@@ -67,10 +67,10 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 if temp.get("pet_image_path") is not None:
                     temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
                 r.append(temp)
-            if index is None:
-                return sorted(r,key=lambda item:item[orderBy],reverse=True),len(r)
-            else:
-                return sorted(r[(index-1)*15:index*15],key=lambda item:item[orderBy],reverse=True),len(r)
+            # if index is None:
+            #     return sorted(r,key=lambda item:item[orderBy],reverse=True),len(r)
+            # else:
+            return sorted(r[(index-1)*15:index*15],key=lambda item:item[orderBy],reverse=True),len(r)
         elif table == "answer":
             answers = Answer.query.filter_by(**key).all()
             for answer in answers:
@@ -84,7 +84,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
                     answer_dict.update({"user_id": answer_dict.pop("employee_id")})
                 r.append(answer_dict)
-            return r
+            return r[(index-1)*15:index*15]
         elif table == "question":
             questions = Question.query.filter_by(**key).all()
             for question in questions:
@@ -93,14 +93,14 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 question_dict.update({"username":question.questioner.__dict__.get("username")})
                 question_dict.update({"user_id":question_dict.get("questioner_id")})
                 r.append(question_dict)
-            return r
+            return r[(index-1)*15:index*15]
         elif table == "operation":
             r = Operation.query.filter_by(**key).all()
         elif table == "pet":
             r = Pet.query.filter_by(**key).all()
         else:
             return 0
-        return to_dict(r)
+        return to_dict(r)[(index-1)*15:index*15]
     except BaseException:
         traceback.print_exc()
         return 0
