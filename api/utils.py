@@ -1,11 +1,16 @@
-from core import app
-from flask import Flask, send_file, jsonify, session, g
+from core import app,db
+from flask import Flask, send_file, jsonify, session, g,request
 import api.SqlUtils as DBUtil
 from core.config import Config
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import BadSignature, SignatureExpired
 from flask_httpauth import HTTPTokenAuth   #要pip install flask_httpauth
 auth = HTTPTokenAuth()
+
+from models.models import Employee
+import time
+import api.SqlUtils as DBUtil
+import re
 
 def getCustomer():
     return g.customer
@@ -37,7 +42,7 @@ def verify_token(token):
     return False
     
 def generate_token(user_id,identify):
-    expiration = 3600           #  3600s = 一小时
+    expiration = 360000           #  3600s = 一小时
     serializer = Serializer(Config.SECRET_KEY,expires_in=expiration) 
     token = serializer.dumps({"user_id":user_id,"identify":identify}).decode("utf-8")
     return jsonify({
@@ -65,3 +70,62 @@ def status(code, msg=None, data={}):
         404: {'code': 404, 'error': msg or 'not found'}  
     }
     return jsonify(codes.get(code))
+
+
+@app.route('/api/question/create',methods=['POST'])
+@auth.login_required
+def question_create():
+    question_res = request.get_json()
+    # {
+    #     content:"this is a question",
+    #     questioner_id:"123",
+    # }
+    success = DBUtil.insert(question_res,"question")
+    if success:
+        return status(201,"insert question successfully")
+    else:
+        return status(404)
+
+
+@app.route('/api/question/<int:id>',methods=['GET'])            #每一堆吗？ 和 appointment一样
+@auth.login_required
+def question_get():
+
+    questions = DBUtil.search(query,"question")
+    if questions:
+        return status(201,"get qeustions successfully")
+    else:
+        return status(404)
+
+
+@app.route('/api/answer/create',methods=['POST'])
+@auth.login_required
+def answer_create():
+
+    answer_res = request.get_json()
+
+    # {
+    #     content="this is an answer"
+    #     question_id = "1"
+    #     # user_id
+    # }
+
+    success = DBUtil.insert(answer_res,"answer")
+    if success:
+        return status(201,"insert answer successfully")
+    else:
+        return status(404)
+
+@app.route('/api/answer/<int:id>',methods=['GET'])   #  question 的 id          返回的格式
+@auth.login_required
+def answer_get(id):
+    
+    query={"question_id" : id}
+    answers = DBUtil.search(query,"answer")
+
+    if answers:
+        return status(201,"get answers successfully",answers)
+    else:
+        return status(404)
+
+
