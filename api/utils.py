@@ -35,9 +35,9 @@ def verify_token(token):
     identify = data["identify"]
     if user_id:
         if identify == "customer":
-            g.customer = DBUtil.search({"id":user_id},identify)[0]
+            g.customer = DBUtil.search({"id":user_id},identify)[0][0]
         else:
-            g.employee = DBUtil.search({"id":user_id},identify)[0]
+            g.employee = DBUtil.search({"id":user_id},identify)[0][0]
         return True
     return False
     
@@ -76,10 +76,11 @@ def status(code, msg=None, data={}):
 @auth.login_required
 def question_create():
     question_res = request.get_json()
+    question_res['questioner_id'] = g.customer.get('id')
     # {
     #     content:"this is a question",
-    #     questioner_id:"123",
     # }
+    print(question_res)
     success = DBUtil.insert(question_res,"question")
     if success:
         return status(201,"insert question successfully")
@@ -87,15 +88,15 @@ def question_create():
         return status(404)
 
 
-@app.route('/api/question/<int:id>',methods=['GET'])            #每一堆吗？ 和 appointment一样
-@auth.login_required
-def question_get():
+# @app.route('/api/question/<int:id>',methods=['GET'])                  #每一堆吗？ 和 appointment一样
+# @auth.login_required
+# def question_get():
 
-    questions = DBUtil.search(query,"question")
-    if questions:
-        return status(201,"get qeustions successfully")
-    else:
-        return status(404)
+#     questions = DBUtil.search(query,"question")
+#     if questions:
+#         return status(201,"get qeustions successfully")
+#     else:
+#         return status(404)
 
 
 @app.route('/api/answer/create',methods=['POST'])
@@ -104,10 +105,15 @@ def answer_create():
 
     answer_res = request.get_json()
 
-    # {
-    #     content="this is an answer"
-    #     question_id = "1"
-    #     # user_id
+    if answer_res.get('user_type') == 'customer':
+        answer_res['user_id'] = g.customer.get('id')
+    else:
+        answer_res['user_id'] = g.employee.get('id')
+
+    # {	
+    # 	"content":"this is a answer",
+    # 	"user_type":"customer",
+    # 	"question_id":1
     # }
 
     success = DBUtil.insert(answer_res,"answer")
@@ -116,16 +122,34 @@ def answer_create():
     else:
         return status(404)
 
-@app.route('/api/answer/<int:id>',methods=['GET'])   #  question 的 id          返回的格式
+@app.route('/api/answer/<int:id>',methods=['GET'])      #  question 的 id          返回的格式
 @auth.login_required
 def answer_get(id):
     
-    query={"question_id" : id}
-    answers = DBUtil.search(query,"answer")
+    url  = request.url      # request.url: 返回带?，request.base_url返回不带?的
+
+    para = re.findall(r'([^?&]*?)=',url)
+    value = re.findall(r'=([^?&]*)',url)
+
+    inpu = {}
+    inpu['index'] = id
+    for i in range(0,len(para)):
+        inpu[para[i]] = value[i]
+
+    answers = DBUtil.search(inpu,"answer")
+
+    for a in answers:
+        a.pop("_sa_instance_state")
+        a.pop("employee_id")
+        a.pop('customer_answerer')
 
     if answers:
-        return status(201,"get answers successfully",answers)
+        return_answers = {}
+        # return_answers["total"] = length
+        return_answers["count"] = len(answers)
+        return_answers["index"] = id
+        return_answers['item'] = answers
+        
+        return status(200,"get answers successfully",return_answers)
     else:
         return status(404)
-
-

@@ -18,10 +18,7 @@ def to_dict(list1):#util function
     for item in list1:
         r.append(item.to_dict())
 
-    if len(r)==0:
-        return None
-    else:
-        return r
+    return r
 
 def search(key,table):#key is a dict variable used to search required row in target table
     # when search for the data in answer and question table, it will return the data with the user binded
@@ -186,7 +183,7 @@ def insert(data,table):#data is a dict object,
                         data["pet_image_path"].save(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg")
                         # mp.imsave(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg",data["pet_image_path"])
                         data["pet_image_path"] = IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg"
-                    db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
+                    # db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
                     return 0
@@ -291,6 +288,10 @@ def modify(key,data,table):#key is a dict variable used to search required row i
 
 def searchTimeSpan(key,table):#The key format should be {"column":"...","start":datetime.datetime(yaer,month,day),"end":datetime.datetime(yaer,month,day)}
     try:
+        # preprocessing
+        key["start"]=datetime.datetime.strptime(key["start"], '%Y-%m-%d %H:%M:%S')
+        key["end"] = datetime.datetime.strptime(key["end"], '%Y-%m-%d %H:%M:%S')
+
         table = table.lower()
         r=[]
         if table == "customer":

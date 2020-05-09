@@ -8,18 +8,17 @@ import re
 
 # ------------------------------------------------------------------------------------------------------------------------------------#
 
-@app.route('/api/customer/getinfo',methods=['GET'])
-@auth.login_required
-def user_info():
-    customer = getCustomer()
-    info = {"id":customer.get("id")}
-    return status(200,data = info)
+# @app.route('/api/customer/getinfo',methods=['GET'])
+# @auth.login_required
+# def user_info():
+#     customer = getCustomer()
+#     info = {"id":customer.get("id")}
+#     return status(200,data = info)
 
 @app.route('/api/customer/register', methods=['POST']) 
 def user_register():
     
     # 避免瞎注册  正则表达式
-
     register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
     username = {"username":register_res.get("username")}   #提取有用信息(username)
     
@@ -47,7 +46,7 @@ def user_login():
     if not user:
         return status(4103,'error username or password')
     else:
-        user_id = user[0].get('id')
+        user_id = user[0][0].get('id')                               #咋回事啊   变成两个[0][0] 了
         return generate_token(user_id,"customer")
         
 
@@ -70,6 +69,7 @@ def appointment_create():
     pets["pet_species"] = appointment_res.get("species")
 
     succusse = DBUtil.search(pets,"pet")              #没找到才插入
+    print(succusse)
     if not succusse:
         DBUtil.insert(pets,"pet")
     
@@ -86,20 +86,22 @@ def appointment_create():
 def user_logout():
     return status(201,'logout success')
 
-@app.route('/api/customer/pet/',methods=['GET'])
+@app.route('/api/customer/pet/<int:id>',methods=['GET'])
 @auth.login_required
-def get_pets():
+def get_pets(id):
     
     current_customer = getCustomer()
-    query = {"owner_id":current_customer.get('id')}
-    pets = DBUtil.search(query,"pet")
+    query = {"owner_id":current_customer.get('id'),'index':id}
+    pets ,length = DBUtil.search(query,"pet")
 
     if pets:
         for p in pets:
             p.pop('_sa_instance_state')
         return_data = {}
-        return_data["number"] = len(pets)
-        return_data["data"] = pets
+        return_data["count"] = len(pets)
+        return_data['index'] = id
+        return_data["item"] = pets
+        return_data['total'] = length
         return status(200,'get pet successfully',return_data)
     else:
         return status(4103,'fail to get pets')
@@ -118,9 +120,12 @@ def user_appointment_get(id):      #id是appointment的id
     inpu = {}
     inpu['index'] = id
     inpu['customer_id'] = current_customer['id']
+    inpu['appointment_date'] = '2020-02-05 00:00:00'
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
+    print(inpu)
+    print("-------------------------------------")
     appointments,length = DBUtil.search(inpu,"appointment")
 
     for a in appointments:
@@ -143,7 +148,7 @@ def user_profile_get():
     #获取用户信息
     current_customer = getCustomer()
 
-    profile = DBUtil.search({'id':current_customer['id']},'customer')
+    profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
     profile[0].pop("_sa_instance_state")
     profile[0].pop("password_hash")
     if profile:
@@ -160,7 +165,7 @@ def user_profile_modify():
 
     profile_res = request.get_json()
 
-    profile = DBUtil.search({'id':current_customer['id']},'customer')
+    profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
     
     if profile:
         success = DBUtil.modify({'id':id},profile_res,'customer')
@@ -202,11 +207,11 @@ def user_operation_get(id):
 
     inpu = {}
     inpu['index'] = id
-    inpu['customer_id'] = current_customer['id']
+    inpu['customer_id'] = current_customer.get('id')
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
-    operations,length = DBUtil.search(inpu,'operation') 
+    operations, length = DBUtil.search(inpu,'operation')
 
     for o in operations:
         o.pop("_sa_instance_state")
@@ -220,4 +225,4 @@ def user_operation_get(id):
     if operations:
         return status(200,'get operation successfully',return_operation)
     else:      
-        return status(404)  #如果没有该operation   或   搜索出错
+        return status(404)  
