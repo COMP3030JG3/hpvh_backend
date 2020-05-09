@@ -253,12 +253,20 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         # data = json.loads(data)
         table = table.lower()
         if table == "customer":
-            if "password_hash" in data:
-                data["password_hash"]= generate_password_hash(str(data["password_hash"]))
+            if key.get("old_password") is not None:
+                old_password = key.pop("old_password")
+                if "password_hash" in data:
+                    new_password = data.pop("password_hash")
+                    if check_password_hash(Customer.query.filter_by(**key).first().password_hash,old_password):
+                        data["password_hash"]= generate_password_hash(str(new_password))
             Customer.query.filter_by(**key).update(data)
         elif table == "employee":
-            if "password_hash" in data:
-                data["password_hash"]= generate_password_hash(str(data["password_hash"]))
+            if key.get("old_password") is not None:
+                old_password = key.pop("old_password")
+                if "password_hash" in data:
+                    new_password = data.pop("password_hash")
+                    if check_password_hash(Employee.query.filter_by(**key).first().password_hash, old_password):
+                        data["password_hash"] = generate_password_hash(str(new_password))
             Employee.query.filter_by(**key).update(data)
         elif table == "appointment":
             if data.get("pet_image_path") is not None:
