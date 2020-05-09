@@ -6,7 +6,7 @@ from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question, Pet
 from werkzeug.security import generate_password_hash,check_password_hash
 
-APPOINTMENT_LIMIT=3
+APPOINTMENT_LIMIT=20
 
 # get path config
 temp=os.path.dirname(__file__).split("/")
@@ -35,7 +35,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
         if key.get("orderBy") is not None:
             orderBy = key.pop("orderBy")
         else:
-            orderBy = None
+            orderBy = "appointment_date"
 
         r=[]
         if table == "customer":
@@ -53,6 +53,13 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     return 0
             r = Employee.query.filter_by(**key).all()
         elif table == "appointment":
+            # preprocessing
+            key["appointment_date"] = datetime.datetime.strptime(key["appointment_date"], '%Y-%m-%d %H:%M:%S')
+            # if key.get("date") is not None:
+            #     key["date"] = datetime.datetime.strptime(key["date"], '%Y-%m-%d %H:%M:%S')
+
+            d = {}
+            d["appointment_date"] = key["appointment_date"]
             appointments = Appointment.query.filter_by(**key).all()
             r=[]
             for appointment in appointments:
@@ -179,13 +186,13 @@ def insert(data,table):#data is a dict object,
                         data["pet_image_path"].save(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg")
                         # mp.imsave(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg",data["pet_image_path"])
                         data["pet_image_path"] = IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg"
-                    db.session.add(Pet(owner_id=data.get("customer"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
+                    db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
                     return 0
             else:
                 db.session.add(
-                    Pet(owner_id=data.get("customer"), pet_name=data.get("pet_name"), pet_gender=data.get("pet_gender"),
+                    Pet(owner_id=data.get("customer_id"), pet_name=data.get("pet_name"), pet_gender=data.get("pet_gender"),
                         pet_species=data.get("species")))
                 db.session.add(Appointment(id=1,**data))
         elif table == "answer":
@@ -246,8 +253,12 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         # data = json.loads(data)
         table = table.lower()
         if table == "customer":
+            if "password_hash" in data:
+                data["password_hash"]= generate_password_hash(str(data["password_hash"]))
             Customer.query.filter_by(**key).update(data)
         elif table == "employee":
+            if "password_hash" in data:
+                data["password_hash"]= generate_password_hash(str(data["password_hash"]))
             Employee.query.filter_by(**key).update(data)
         elif table == "appointment":
             if data.get("pet_image_path") is not None:
