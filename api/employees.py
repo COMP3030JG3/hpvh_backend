@@ -112,25 +112,6 @@ def employee_profile_get():
         return status(404)
 
 
-# @app.route('/api/employee/profile/modify',methods = ['POST'])             #需要修改customer的profile？
-# @auth.login_required
-# def employee_profile_modify():
-
-#     current_employee = getEmployee()
-
-#     profile_res = request.get_json()
-
-#     profile = DBUtil.search({'id':current_employee['id']},'employee')
-    
-#     if profile:
-#         success = DBUtil.modify({'id':id},profile_res,'customer')
-#         if success:
-#             return status(201,'update profile successfully')
-#         else:
-#             return status(403,'update profile fails')
-#     else:
-#         return status(404)
-
 @app.route('/api/employee/password/modify',methods = ['POST'])               
 @auth.login_required
 def employee_password_modify():
@@ -201,13 +182,68 @@ def employee_operation_modify(id):
         return status(403,'update fails')
     return status(201,'update successfully')
 
-# @app.route('api/employee/search/<int:id>',methods=['GET'])
-# @auth.login_required
-# def employee_search():
-#     current_employee = g.employee
-#     level = g.employee.get('level')
-#     if level = "administrator":
-#         return status(404,'you have no rights')
-#     else:
-#         employees = DBUtil.search({'index':id},'employee')
-#         e = {}
+@app.route('/api/employee/<int:id>',methods=['GET'])
+@auth.login_required
+def employee_search(id):
+    current_employee = getEmployee()
+    level = current_employee.get('level')
+    if level == "administrator":
+        employees,length = DBUtil.search({'index':id},'employee')
+        for ee in employees:
+            ee.pop("_sa_instance_state")
+            ee.pop("password_hash")
+        e = {}
+        e['total'] = length
+        e['count'] =  0 if employees==0 else len(employees)
+        e['index'] = id
+        e['item'] = employees
+        return status(200,'get employees successfully',e)
+    else:
+        return status(404,'you have no rights')
+
+@app.route('/api/employee/modify/<int:id>',methods = ['POST'])             #需要修改customer的profile？
+@auth.login_required
+def employee_profile_modify(id):
+
+    current_employee = getEmployee()
+    level = current_employee.get('level')
+    if level == "administrator":
+        profile_res = request.get_json()
+
+        profile = DBUtil.search({'id':id},'employee')[0]
+        if not profile:
+            return status(404,'no such employee')
+        else:
+            success = DBUtil.modify({'id':id},profile_res,'employee')
+            if success:
+                return status(201,'update profile successfully')
+            else:
+                return status(403,'update profile fails')
+    else:
+        return status(404,'you have no rights')
+
+@app.route('/api/employee/add', methods=['POST'])
+@auth.login_required
+def employee_add():
+    
+    current_employee = getEmployee()
+    level = current_employee.get('level')
+    if level == "administrator":
+
+        register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
+        username = {"username":register_res.get("username")}   #提取有用信息(username)
+        if DBUtil.search(username,"employee")[0]:
+            return status(4103,'exist username')
+        else:
+            return_status = DBUtil.insert(register_res,"employee")    
+            if return_status == 0:                     #插入失败
+                return status(4103,'data insertion failure')
+            else:
+                return status(201,'register success')
+    else:
+        return status(404,'you have no rights')
+
+
+
+
+
