@@ -21,8 +21,9 @@ def employee_register():
     register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
 
     username = {"username":register_res.get("username")}   #提取有用信息(username)
-    
-    if DBUtil.search(username,"employee"):
+    print(username)
+    if DBUtil.search(username,"employee")[0]:
+        print(DBUtil.search(username,"employee"))
         return status(4103,'exist username')
     else:
         return_status = DBUtil.insert(register_res,"employee")    
@@ -36,7 +37,7 @@ def employee_login():
 
     login_res = request.get_json()                #get_json获得字典  格式{username：,password：}       名字尚未统一, password还是password_hash
 
-    user = DBUtil.search(login_res,'employee')     #返回的是一个数组, [0] 获得第一个
+    user = DBUtil.search(login_res,'employee')[0]     #返回的是一个数组, [0] 获得第一个
 
     if not user:
         return status(4103,'error username or password')
@@ -64,6 +65,7 @@ def employee_appointment_get(id):
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
+    # inpu['appointment_date'] = '2020-02-05 00:00:00'
     appointments, length  = DBUtil.search(inpu,'appointment')   
 
     for a in appointments:
@@ -82,9 +84,9 @@ def employee_appointment_get(id):
 
 
 
-@app.route('/api/employee/appointment/modify',methods = ['POST']) 
+@app.route('/api/employee/appointment/modify/<int:id>',methods = ['POST']) 
 @auth.login_required
-def employee_appointment_modify():
+def employee_appointment_modify(id):
     
     appointment_res = request.get_json()
 
@@ -100,9 +102,9 @@ def employee_profile_get():
     #获取用户信息
     current_employee = getEmployee()
 
-    profile = DBUtil.search({'id':current_employee['id']},'employee')
-    profile[0].pop("_sa_instance_state")
-    profile[0].pop("password_hash")
+    profile = DBUtil.search({'id':current_employee['id']},'employee')[0][0]
+    profile.pop("_sa_instance_state")
+    profile.pop("password_hash")
 
     if profile:
         return status(200,'get profile successfully',profile)
@@ -110,24 +112,24 @@ def employee_profile_get():
         return status(404)
 
 
-@app.route('/api/employee/profile/modify',methods = ['POST'])             #需要修改customer的profile？
-@auth.login_required
-def employee_profile_modify():
+# @app.route('/api/employee/profile/modify',methods = ['POST'])             #需要修改customer的profile？
+# @auth.login_required
+# def employee_profile_modify():
 
-    current_employee = getEmployee()
+#     current_employee = getEmployee()
 
-    profile_res = request.get_json()
+#     profile_res = request.get_json()
 
-    profile = DBUtil.search({'id':current_employee['id']},'employee')
+#     profile = DBUtil.search({'id':current_employee['id']},'employee')
     
-    if profile:
-        success = DBUtil.modify({'id':id},profile_res,'customer')
-        if success:
-            return status(201,'update profile successfully')
-        else:
-            return status(403,'update profile fails')
-    else:
-        return status(404)
+#     if profile:
+#         success = DBUtil.modify({'id':id},profile_res,'customer')
+#         if success:
+#             return status(201,'update profile successfully')
+#         else:
+#             return status(403,'update profile fails')
+#     else:
+#         return status(404)
 
 @app.route('/api/employee/password/modify',methods = ['POST'])               
 @auth.login_required
@@ -189,13 +191,13 @@ def employee_operation_get(id):
     else:      
         return status(404)  #如果没有该operation   或   搜索出错
 
-@app.route('/api/employee/operation/modify',methods = ['POST']) 
+@app.route('/api/employee/operation/modify/<int:id>',methods = ['POST']) 
 @auth.login_required
-def employee_operation_modify():
+def employee_operation_modify(id):
     
     operation_res = request.get_json()
-
-    if not DBUtil.modify({'id':operation_res['id']},operation_res,'appointment'):
+    print(operation_res)
+    if not DBUtil.modify({'id':id},operation_res,'operation'):
         return status(403,'update fails')
     return status(201,'update successfully')
 

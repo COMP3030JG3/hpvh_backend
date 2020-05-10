@@ -22,7 +22,7 @@ def user_register():
     register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
     username = {"username":register_res.get("username")}   #提取有用信息(username)
     
-    if DBUtil.search(username,"customer"):
+    if DBUtil.search(username,"customer")[0]:
         return status(4103,'exist username')
     else:
         return_status = DBUtil.insert(register_res,"customer")    
