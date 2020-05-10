@@ -54,7 +54,7 @@ def generate_token(user_id,identify):
 @auth.error_handler
 def error_handler():
     return jsonify({ "code":401, 
-                     "msg":'Unauthorized Access' 
+                    "msg":'Unauthorized Access' 
                 })
 
 def status(code, msg=None, data={}):
@@ -88,15 +88,26 @@ def question_create():
         return status(404)
 
 
-# @app.route('/api/question/<int:id>',methods=['GET'])                  #每一堆吗？ 和 appointment一样
-# @auth.login_required
-# def question_get():
+@app.route('/api/question/<int:id>',methods=['GET'])               
+@auth.login_required
+def question_get(id):
 
-#     questions = DBUtil.search(query,"question")
-#     if questions:
-#         return status(201,"get qeustions successfully")
-#     else:
-#         return status(404)
+    questions, length = DBUtil.search({'index':id},"question")
+
+    for q in questions:
+        q.pop("_sa_instance_state")
+        q.pop('questioner')
+    print(questions)
+
+    return_data = {}
+    return_data["total"] = length
+    return_data["count"] = 0 if questions==0 else len(questions)
+    return_data["index"] = id
+    return_data["item"] = questions
+
+
+    return status(200,'get operation successfully',return_data)
+
 
 
 @app.route('/api/answer/create',methods=['POST'])
@@ -136,7 +147,7 @@ def answer_get(id):
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
-    answers = DBUtil.search(inpu,"answer")
+    answers ,length = DBUtil.search(inpu,"answer")
 
     for a in answers:
         a.pop("_sa_instance_state")
@@ -145,7 +156,7 @@ def answer_get(id):
 
     if answers:
         return_answers = {}
-        # return_answers["total"] = length
+        return_answers["total"] = length
         return_answers["count"] = len(answers)
         return_answers["index"] = id
         return_answers['item'] = answers
