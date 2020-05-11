@@ -92,7 +92,17 @@ def question_create():
 @auth.login_required
 def question_get(id):
 
-    questions, length = DBUtil.search({'index':id},"question")
+    url  = request.url      # request.url: 返回带?，request.base_url返回不带?的
+
+    para = re.findall(r'([^?&]*?)=',url)
+    value = re.findall(r'=([^?&]*)',url)
+
+    inpu = {}
+    inpu['index'] = id
+    for i in range(0,len(para)):
+        inpu[para[i]] = value[i]
+
+    questions, length = DBUtil.search(inpu,"question")
 
     for q in questions:
         q.pop("_sa_instance_state")
