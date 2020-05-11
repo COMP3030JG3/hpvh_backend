@@ -1,3 +1,4 @@
+import base64
 import datetime
 import os
 import matplotlib.image as mp
@@ -234,7 +235,8 @@ def insert(data,table):#data is a dict object,
                 if maxId < APPOINTMENT_LIMIT:
                     data["id"] = maxId + 1
                     if data.get("pet_image_path") is not None:
-                        data["pet_image_path"].save(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg")
+                        with open(r"uploaded_image\pet_image_path\1.jpg","w") as image:
+                            image.write(base64.b64decode(data["pet_image_path"]))
                         # mp.imsave(IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg",data["pet_image_path"])
                         data["pet_image_path"] = IMAGE_DIR + "/pet_image_path/" + str(data["id"]) + ".jpg"
                     db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
@@ -342,7 +344,8 @@ def modify(key,data,table):#key is a dict variable used to search required row i
             if data.get("pet_image_path") is not None:
                 pet_image_path = Appointment.query.filter_by(**key).first().pet_image_path
                 os.remove(pet_image_path)
-                data["pet_image_path"].save(pet_image_path)
+                with open(r"uploaded_image\pet_image_path\1.jpg", "w") as image:
+                    image.write(base64.b64decode(data["pet_image_path"]))
                 data.pop("pet_image_path")
 
             Appointment.query.filter_by(**key).update(data)
