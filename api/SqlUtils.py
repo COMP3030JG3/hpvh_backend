@@ -350,7 +350,7 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                     if check_password_hash(Customer.query.filter_by(**key).first().password_hash,old_password):
                         data["password_hash"]= generate_password_hash(str(new_password))
             if "customer_image_path" in data:
-                os.remove(data["customer_image_path"])
+                os.remove(Customer.query.filter_by(**key).first().customer_image_path)
                 id = data["id"]
                 with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
                     image.write(base64.b64decode(data["customer_image_path"]))
