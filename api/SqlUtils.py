@@ -52,12 +52,11 @@ def search(key,table):#key is a dict variable used to search required row in tar
             r = Employee.query.filter_by(**key).all()
         elif table == "appointment":
             # preprocessing
-            key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
+            if "appointment_date" in key:
+                key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
-            d = {}
-            d["appointment_date"] = key["appointment_date"]
             appointments = Appointment.query.filter_by(**key).all()
             r=[]
             for appointment in appointments:
