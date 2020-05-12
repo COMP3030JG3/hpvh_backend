@@ -120,7 +120,7 @@ def user_appointment_get(id):      #id是appointment的id
     inpu = {}
     inpu['index'] = id
     inpu['customer_id'] = current_customer['id']
-    inpu['appointment_date'] = '2020-02-05 00:00:00'
+    
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
@@ -168,7 +168,7 @@ def user_profile_modify():
     profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
     
     if profile:
-        success = DBUtil.modify({'id':id},profile_res,'customer')
+        success = DBUtil.modify({'id':current_customer['id']},profile_res,'customer')
         if success:
             return status(201,'update profile successfully')
         else:
