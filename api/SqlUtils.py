@@ -1,7 +1,6 @@
 import base64
 import datetime
 import os
-import matplotlib.image as mp
 import traceback
 from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question, Pet
@@ -64,8 +63,6 @@ def search(key,table):#key is a dict variable used to search required row in tar
 
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
-                if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
 
                 r.append(temp)
             # if index is None:
@@ -159,7 +156,6 @@ def searchAll(table):#select * from table
                 temp = appointment.__dict__
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
-                temp["pet_image_path"] = mp.imread(temp["pet_image_path"])
                 r.append(temp)
             return r
         elif table == "answer":
@@ -457,8 +453,6 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
 
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
-                if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
 
                 r.append(temp)
             return sorted(r[(index - 1) * 15:index * 15], key=lambda item: item[orderBy], reverse=True)
