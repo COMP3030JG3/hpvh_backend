@@ -240,11 +240,11 @@ def insert(data,table):#data is a dict object,
                 if maxId < APPOINTMENT_LIMIT:
                     data["id"] = maxId + 1
                     if data.get("pet_image_path") is not None:
-                        if not os.path.exists(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"]) ):
-                            os.mkdir(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"]) )
-                        with open(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg","w") as image:
+                        if not os.path.exists(r"uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) ):
+                            os.mkdir(r"uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) )
+                        with open(r"uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg","w") as image:
                             image.write(base64.b64decode(data["pet_image_path"]))
-                        data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg"
+                        data["pet_image_path"] = "uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg"
                     db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
@@ -356,6 +356,8 @@ def modify(key,data,table):#key is a dict variable used to search required row i
             if data.get("pet_image_path") is not None:
                 pet_image_path = Appointment.query.filter_by(**key).first().pet_image_path
                 os.remove(pet_image_path)
+                if not os.path.exists(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"])):
+                    os.mkdir(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"]))
                 with open(pet_image_path, "w") as image:
                     image.write(base64.b64decode(data["pet_image_path"]))
                     data["pet_image_path"] = pet_image_path
