@@ -215,7 +215,7 @@ def insert(data,table):#data is a dict object,
                 data["password_hash"]= password_hash
             if "customer_image_path" in data:
                 id = len(Customer.query.all()) + 1
-                with open("uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg", "wb") as image:
+                with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
                     image.write(base64.b64decode(data["customer_image_path"]))
                     data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg"
             db.session.add(Customer(**data))
