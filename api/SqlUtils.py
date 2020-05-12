@@ -216,7 +216,7 @@ def insert(data,table):#data is a dict object,
                 data["password_hash"]= password_hash
             if "customer_image_path" in data:
                 id = len(Customer.query.all()) + 1
-                with open(r"uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg", "w") as image:
+                with open("uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg", "wb") as image:
                     image.write(base64.b64decode(data["customer_image_path"]))
                     data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg"
             db.session.add(Customer(**data))
@@ -292,8 +292,8 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         if table == "customer":
             items=Customer.query.filter_by(**key).all()
             for customer in items:
-                if items.customer_image_path is not None:
-                    os.remove(items.customer_image_path)
+                if customer.customer_image_path is not None:
+                    os.remove(customer.customer_image_path)
         elif table == "employee":
             items = Employee.query.filter_by(**key).all()
         elif table == "appointment":
@@ -353,7 +353,7 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                 if "customer_image_path" in data:
                     os.remove(data["customer_image_path"])
                     id = data["id"]
-                    with open(r"uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg", "w") as image:
+                    with open("uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg", "wb") as image:
                         image.write(base64.b64decode(data["customer_image_path"]))
                         data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + "\\" + ".jpg"
             Customer.query.filter_by(**key).update(data)
@@ -380,9 +380,9 @@ def modify(key,data,table):#key is a dict variable used to search required row i
             if data.get("pet_image_path") is not None:
                 pet_image_path = Appointment.query.filter_by(**key).first().pet_image_path
                 os.remove(pet_image_path)
-                if not os.path.exists(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"])):
-                    os.mkdir(r"uploaded_image\pet_image_path\\" + str(data["appointment_date"]))
-                with open(pet_image_path, "w") as image:
+                if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) ):
+                    os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) )
+                with open(pet_image_path, "wb") as image:
                     image.write(base64.b64decode(data["pet_image_path"]))
                     data["pet_image_path"] = pet_image_path
 
