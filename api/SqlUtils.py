@@ -42,7 +42,14 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 r = Customer.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            r=Customer.query.filter_by(**key).all()
+            customers=Customer.query.filter_by(**key).all()
+            r=[]
+            for customer in customers:
+                customer_dict = customer.__dict__
+                if customer_dict["customer_image_path"] is not None:
+                    customer_dict["customer_image_path"] = customer_dict["id"]
+                r.append(customer_dict)
+            return r
         elif table == "employee":
             if "password_hash" in key:
                 password=key.pop("password_hash")
@@ -65,7 +72,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
+                    temp["pet_image_path"]=temp["app_primary_key"]
 
                 r.append(temp)
             # if index is None:
@@ -150,7 +157,13 @@ def searchAll(table):#select * from table
         table = table.lower()
         r=[]
         if table == "customer":
-            r=Customer.query.all()
+            customers=Customer.query.all()
+            for customer in customers:
+                customer_dict = customer.__dict__
+                if customer_dict["customer_image_path"] is not None:
+                    customer_dict["customer_image_path"] = customer_dict["id"]
+                r.append(customer_dict)
+            return r
         elif table == "employee":
             r = Employee.query.all()
         elif table == "appointment":
@@ -159,7 +172,8 @@ def searchAll(table):#select * from table
                 temp = appointment.__dict__
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
-                temp["pet_image_path"] = mp.imread(temp["pet_image_path"])
+                if temp["pet_image_path"] is not None:
+                    temp["pet_image_path"] = temp["app_primary_key"]
                 r.append(temp)
             return r
         elif table == "answer":
@@ -355,7 +369,7 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                 old_image_path = Customer.query.filter_by(**key).first().customer_image_path
                 if old_image_path is not None:
                     os.remove(old_image_path)
-                id = data["id"]
+                id = key["id"]
                 with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
                     print(2)
                     image.write(base64.b64decode(data["customer_image_path"]))
@@ -501,6 +515,20 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
         traceback.print_exc()
         return 0
 
+def searchImage(key,table):
+    table = table.lower()
+    if table == "customer":
+        customer = Customer.query.filter_by(**key).first()
+        if customer.customer_image_path is not None:
+            with open(customer.customer_image_path,"rb") as image:
+                b=bytearray(image.read())
+        return b
+    elif table=="appointment":
+        appointment = Appointment.query.filter_by(**key).first()
+        if appointment.pet_image_path is not None:
+            with open(appointment.pet_image_path,"rb") as image:
+                b = bytearray(image.read())
+        return b
 
 
 if __name__ == '__main__':
