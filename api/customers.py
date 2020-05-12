@@ -251,7 +251,7 @@ def validate_picture():
     #生成一个新图片对象
     im = Image.new('RGB', (width, height), 'white')
     # 设置字体
-    font = ImageFont.truetype('C:\\Users\\79964\\Desktop\\app\\4\\static\\Calibri-Bold.ttf', 40)
+    font = ImageFont.truetype('\\CALIFB.TTF', 40)
     # font = ImageFont.load_default().font
     # 创建draw对象
     draw = ImageDraw.Draw(im)
