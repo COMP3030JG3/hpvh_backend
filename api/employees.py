@@ -37,12 +37,12 @@ def employee_login():
 
     login_res = request.get_json()                #get_json获得字典  格式{username：,password：}       名字尚未统一, password还是password_hash
 
-    user = DBUtil.search(login_res,'employee')[0]     #返回的是一个数组, [0] 获得第一个
+    user = DBUtil.search(login_res,'employee')     #返回的是一个数组, [0] 获得第一个
 
     if not user:
         return status(4103,'error username or password')
     else:
-        user_id = user[0].get('id')
+        user_id = user[0][0].get('id')
         return generate_token(user_id,"employee")
 
 
