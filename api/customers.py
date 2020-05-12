@@ -5,7 +5,11 @@ from api.utils import status, auth , generate_token , getCustomer
 import time
 import api.SqlUtils as DBUtil
 import re
+from flask import make_response
 
+import io
+from PIL import Image,ImageFont, ImageDraw, ImageFilter
+import random
 # ------------------------------------------------------------------------------------------------------------------------------------#
 
 # @app.route('/api/customer/getinfo',methods=['GET'])
@@ -22,6 +26,14 @@ def user_register():
     register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
     username = {"username":register_res.get("username")}   #提取有用信息(username)
     
+    #验证码测试
+    if 'captcha' not in register_res:
+        return status(4103,'No verification code')
+
+    test = register_res.pop('captcha')
+    if test.lower() != session['image'].lower():
+        return status(4103,'Incorrect verification code')
+
     if DBUtil.search(username,"customer")[0]:
         return status(4103,'exist username')
     else:
@@ -120,12 +132,12 @@ def user_appointment_get(id):      #id是appointment的id
     inpu = {}
     inpu['index'] = id
     inpu['customer_id'] = current_customer['id']
-    inpu['appointment_date'] = '2020-02-05 00:00:00'
+    # inpu['appointment_date'] = 109821017
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
-    print(inpu)
-    print("-------------------------------------")
+    # print(inpu)
+    # print("-------------------------------------")
     appointments,length = DBUtil.search(inpu,"appointment")
 
     for a in appointments:
@@ -226,3 +238,57 @@ def user_operation_get(id):
         return status(200,'get operation successfully',return_operation)
     else:      
         return status(404)  
+
+
+
+# references :  https://blog.51cto.com/12080420/2400408
+def validate_picture(): 
+    total = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345789'
+    #图片大小 130 x 50
+    width = 130
+    height = 50
+    #生成一个新图片对象
+    im = Image.new('RGB', (width, height), 'white')
+    # 设置字体
+    font = ImageFont.truetype('C:\\Users\\79964\\Desktop\\app\\4\\static\\Calibri-Bold.ttf', 40)
+    # font = ImageFont.load_default().font
+    # 创建draw对象
+    draw = ImageDraw.Draw(im)
+    str1 = ''
+    # 输入每一个文字
+    for item in range(5):
+        text = random.choice(total)
+        str1 += text
+        draw.text((5+random.randint(4, 7)+20*item, 5+random.randint(3, 7)), text=text, fill='blue', font=font)
+    # 划几根干扰线
+    for num in range(8):
+        x1 = random.randint(0, width/2)
+        y1 = random.randint(0, height/2)
+        x2 = random.randint(0, width)
+        y2 = random.randint(height/2, height)
+        draw.line(((x1, y1), (x2, y2)), fill='black', width=1)
+
+    # 模糊下，加个滤镜
+    im = im.filter(ImageFilter.FIND_EDGES)
+    return im, str1
+
+@app.route('/api/customer/code/',methods=['GET'])
+def get_code():
+    image, str1 = validate_picture()
+    # 讲验证码图片以二进制形式写入内存，防止图片都放在文件夹中，占用磁盘空间
+    buf = io.BytesIO()
+    image.save(buf, 'jpeg')
+    buf_str = buf.getvalue()
+    # 把二进制作为response发回前端，并设置头部字段
+    response = make_response(buf_str)
+    response.headers['Content-Type'] = 'image/gif'
+    # 验证码字符串存储在seesion中
+    session['image'] = str1
+    return response
+
+
+@app.route('/api/customer/test',methods=['GET'])
+def test():
+    print(session['image'])
+    print(session['image'].lower())
+    return "0"
