@@ -240,11 +240,11 @@ def insert(data,table):#data is a dict object,
                 if maxId < APPOINTMENT_LIMIT:
                     data["id"] = maxId + 1
                     if data.get("pet_image_path") is not None:
-                        if not os.path.exists(r"uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) ):
-                            os.mkdir(r"uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) )
-                        with open(r"uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg","w") as image:
+                        if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"]) ):
+                            os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"]) )
+                        with open("uploaded_image\pet_image_path\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg","w") as image:
                             image.write(base64.b64decode(data["pet_image_path"]))
-                        data["pet_image_path"] = "uploaded_image\pet_image_path" + "\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg"
+                        data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg"
                     db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
@@ -291,17 +291,41 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         items=[]
         if table == "customer":
             items=Customer.query.filter_by(**key).all()
+            for customer in items:
+                if items.customer_image_path is not None:
+                    os.remove(items.customer_image_path)
         elif table == "employee":
             items = Employee.query.filter_by(**key).all()
         elif table == "appointment":
+            # preprocessing
+            if key.get("appointment_date") is not None:
+                key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
+            if key.get("date") is not None:
+                key["date"] = datetime.datetime.fromtimestamp(key["date"])
+
             items = Appointment.query.filter_by(**key).all()
             for appointment in items:
-                os.remove(appointment.pet_image_path)
+                if appointment.pet_image_path is not None:
+                    os.remove(appointment.pet_image_path)
         elif table == "answer":
+            # preprocessing
+            if key.get("date") is not None:
+                key["date"] = datetime.datetime.fromtimestamp(key["date"])
+
             items = Answer.query.filter_by(**key).all()
         elif table == "question":
+            # preprocessing
+            if key.get("date") is not None:
+                key["date"] = datetime.datetime.fromtimestamp(key["date"])
+
             items = Question.query.filter_by(**key).all()
         elif table == "operation":
+            # preprocessing key
+            if key.get("surgery_begin_time") is not None:
+                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(key["surgery_begin_time"])
+            if key.get("release_time") is not None:
+                key["release_time"] = datetime.datetime.fromtimestamp(key["release_time"])
+
             items = Operation.query.filter_by(**key).all()
         else:
             return 0
