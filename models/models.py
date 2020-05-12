@@ -11,6 +11,7 @@ class Customer(db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     phone_number = db.Column(db.String(11),index=True,unique=True)
     address = db.Column(db.String(120))
+    customer_image_path = db.Column(db.String(500))
 
     appointments = db.relationship('Appointment', backref='customer', lazy='dynamic')
     questions = db.relationship('Question',backref='questioner',lazy='dynamic')
