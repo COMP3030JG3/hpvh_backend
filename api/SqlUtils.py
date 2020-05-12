@@ -240,11 +240,11 @@ def insert(data,table):#data is a dict object,
                 if maxId < APPOINTMENT_LIMIT:
                     data["id"] = maxId + 1
                     if data.get("pet_image_path") is not None:
-                        if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"]) ):
-                            os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"]) )
-                        with open("uploaded_image\pet_image_path\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg","w") as image:
+                        if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) ):
+                            os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) )
+                        with open("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg","w") as image:
                             image.write(base64.b64decode(data["pet_image_path"]))
-                        data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(data["appointment_date"]) + "\\" + str(data["id"]) + ".jpg"
+                        data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg"
                     db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
