@@ -343,6 +343,7 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         # data = json.loads(data)
         table = table.lower()
         if table == "customer":
+            print(0)
             if key.get("old_password") is not None:
                 old_password = key.pop("old_password")
                 if "password_hash" in data:
@@ -350,9 +351,11 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                     if check_password_hash(Customer.query.filter_by(**key).first().password_hash,old_password):
                         data["password_hash"]= generate_password_hash(str(new_password))
             if "customer_image_path" in data:
+                print(1)
                 os.remove(Customer.query.filter_by(**key).first().customer_image_path)
                 id = data["id"]
                 with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
+                    print(2)
                     image.write(base64.b64decode(data["customer_image_path"]))
                     data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + ".jpg"
             Customer.query.filter_by(**key).update(data)
