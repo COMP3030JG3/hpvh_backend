@@ -168,7 +168,7 @@ def user_profile_modify():
     profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
     
     if profile:
-        success = DBUtil.modify({'id':id},profile_res,'customer')
+        success = DBUtil.modify({'id':current_customer['id']},profile_res,'customer')
         if success:
             return status(201,'update profile successfully')
         else:
