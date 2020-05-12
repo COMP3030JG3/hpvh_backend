@@ -102,9 +102,9 @@ def employee_profile_get():
     #获取用户信息
     current_employee = getEmployee()
 
-    profile = DBUtil.search({'id':current_employee['id']},'employee')[0][0]
-    profile.pop("_sa_instance_state")
-    profile.pop("password_hash")
+    profile = DBUtil.search({'id':current_employee['id']},'employee')[0]
+    profile[0].pop("_sa_instance_state")
+    profile[0].pop("password_hash")
 
     if profile:
         return status(200,'get profile successfully',profile)
@@ -155,7 +155,7 @@ def employee_operation_get(id):
     inpu['index'] = id
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
-
+        
     operations,length = DBUtil.search(inpu,'operation') 
 
     for o in operations:
