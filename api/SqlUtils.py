@@ -210,15 +210,12 @@ def insert(data,table):#data is a dict object,
         # data=json.loads(data)
         table=table.lower()
         if table=="customer":
-            print(0)
             if "password_hash" in data:
                 password_hash = generate_password_hash(str(data["password_hash"]))
                 data["password_hash"]= password_hash
             if "customer_image_path" in data:
                 id = len(Customer.query.all()) + 1
-                print(1)
                 with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
-                    print(2)
                     image.write(base64.b64decode(data["customer_image_path"]))
                     data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + ".jpg"
             db.session.add(Customer(**data))
@@ -352,12 +349,12 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                     new_password = data.pop("password_hash")
                     if check_password_hash(Customer.query.filter_by(**key).first().password_hash,old_password):
                         data["password_hash"]= generate_password_hash(str(new_password))
-                if "customer_image_path" in data:
-                    os.remove(data["customer_image_path"])
-                    id = data["id"]
-                    with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
-                        image.write(base64.b64decode(data["customer_image_path"]))
-                        data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + ".jpg"
+            if "customer_image_path" in data:
+                os.remove(data["customer_image_path"])
+                id = data["id"]
+                with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
+                    image.write(base64.b64decode(data["customer_image_path"]))
+                    data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + ".jpg"
             Customer.query.filter_by(**key).update(data)
         elif table == "employee":
             if key.get("old_password") is not None:
