@@ -308,7 +308,6 @@ def pet_image(id):
 
 
 @app.route('/api/customer/image/<int:id>',methods=['GET'])   #  customer自己的
-@auth.login_required
 def customer_image(id):
 
     byte = DBUtil.searchImage({"id":id},'customer')         #传给你  customer id，  返回二进制
