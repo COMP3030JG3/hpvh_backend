@@ -140,7 +140,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
                 operation_dict["release_time"] = operation_dict["release_time"].timestamp()
                 r.append(operation_dict)
-            # return r                  
+            return r[(index-1)*15:index*15],len(r)                
         elif table == "pet":
             r = Pet.query.filter_by(**key).all()
         else:
