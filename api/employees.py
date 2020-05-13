@@ -89,7 +89,8 @@ def employee_appointment_get(id):
 def employee_appointment_modify(id):
     
     appointment_res = request.get_json()
-
+    print(appointment_res)
+    print(id)
     if not DBUtil.modify({'id':id},appointment_res,'appointment'):                                        
         return status(403,'update fails')
     return status(201,'update successfully')
@@ -135,7 +136,13 @@ def employee_password_modify():
 def employee_operation_create():
     
     operation_res = request.get_json()
-
+    if 'appointment_id' not in operation_res:
+        return status(4103, 'must have appointment_id')
+    appointment = DBUtil.search({'app_primary_key': operation_res.get('appointment_id')},'appointment')
+    if not appointment:
+        return status(4013, 'wrong appointment_id')
+    operation_res['customer_id'] = appointment[0][0].get('customer_id')
+    
     if DBUtil.insert(operation_res,'operation'):
         return status(201,'create operation success')
     else:

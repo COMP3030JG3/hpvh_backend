@@ -224,6 +224,7 @@ def user_operation_get(id):
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
+    print(DBUtil.search(inpu,'operation'))
     operations, length = DBUtil.search(inpu,'operation')
 
     for o in operations:
