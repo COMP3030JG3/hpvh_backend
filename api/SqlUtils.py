@@ -48,6 +48,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 customer_dict = customer.__dict__
                 if customer_dict["customer_image_path"] is not None:
                     customer_dict["customer_image_path"] = "/api/customer/image/"+   str(customer_dict["id"])
+
                 r.append(customer_dict)
             return r
         elif table == "employee":
@@ -72,8 +73,9 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-                    
+
                     temp["pet_image_path"]= "/api/appointment/image/" + str(temp["app_primary_key"])
+
 
                 r.append(temp)
             # if index is None:
@@ -141,7 +143,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
                 operation_dict["release_time"] = operation_dict["release_time"].timestamp()
                 r.append(operation_dict)
-            # return r                  
+            return r[(index-1)*15:index*15],len(r)                
         elif table == "pet":
             r = Pet.query.filter_by(**key).all()
         else:
