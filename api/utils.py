@@ -35,7 +35,7 @@ def verify_token(token):
     identify = data["identify"]
     if user_id:
         if identify == "customer":
-            g.customer = DBUtil.search({"id":user_id},identify)[0][0]
+            g.customer = DBUtil.search({"id":user_id},identify)[0]
         else:
             g.employee = DBUtil.search({"id":user_id},identify)[0][0]
         return True

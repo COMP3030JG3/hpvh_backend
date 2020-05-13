@@ -37,12 +37,12 @@ def employee_login():
 
     login_res = request.get_json()                #get_json获得字典  格式{username：,password：}       名字尚未统一, password还是password_hash
 
-    user = DBUtil.search(login_res,'employee')[0]     #返回的是一个数组, [0] 获得第一个
+    user = DBUtil.search(login_res,'employee')     #返回的是一个数组, [0] 获得第一个
 
     if not user:
         return status(4103,'error username or password')
     else:
-        user_id = user[0].get('id')
+        user_id = user[0][0].get('id')
         return generate_token(user_id,"employee")
 
 
@@ -102,9 +102,9 @@ def employee_profile_get():
     #获取用户信息
     current_employee = getEmployee()
 
-    profile = DBUtil.search({'id':current_employee['id']},'employee')[0][0]
-    profile.pop("_sa_instance_state")
-    profile.pop("password_hash")
+    profile = DBUtil.search({'id':current_employee['id']},'employee')[0]
+    profile[0].pop("_sa_instance_state")
+    profile[0].pop("password_hash")
 
     if profile:
         return status(200,'get profile successfully',profile)
@@ -155,7 +155,7 @@ def employee_operation_get(id):
     inpu['index'] = id
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
-
+        
     operations,length = DBUtil.search(inpu,'operation') 
 
     for o in operations:
