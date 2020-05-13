@@ -5,23 +5,25 @@ import matplotlib.image as mp
 import traceback
 from core import db
 from models.models import Customer, Employee, Appointment, Answer, Operation, Question, Pet
-from werkzeug.security import generate_password_hash,check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
-APPOINTMENT_LIMIT=20
+APPOINTMENT_LIMIT = 20
 
 # get path config
-temp=os.path.dirname(__file__).split("/")
+temp = os.path.dirname(__file__).split("/")
 temp.pop()
-IMAGE_DIR="/".join(temp) + "/uploaded_image"
+IMAGE_DIR = "/".join(temp) + "/uploaded_image"
 
-def to_dict(list1):#util function
+
+def to_dict(list1):  # util function
     r = []
     for item in list1:
         r.append(item.to_dict())
 
     return r
 
-def search(key,table):#key is a dict variable used to search required row in target table
+
+def search(key, table):  # key is a dict variable used to search required row in target table
     # when search for the data in answer and question table, it will return the data with the user binded
     try:
         # preprocessing
@@ -35,24 +37,25 @@ def search(key,table):#key is a dict variable used to search required row in tar
         else:
             orderBy = "appointment_date"
 
-        r=[]
+        r = []
         if table == "customer":
             if "password_hash" in key:
-                password=key.pop("password_hash")
+                password = key.pop("password_hash")
                 r = Customer.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            customers=Customer.query.filter_by(**key).all()
-            r=[]
+            customers = Customer.query.filter_by(**key).all()
+            r = []
             for customer in customers:
                 customer_dict = customer.__dict__
                 if customer_dict["customer_image_path"] is not None:
-                    customer_dict["customer_image_path"] = "http://47.94.166.75:3000/api/customer/image/"+   str(customer_dict["id"])
+                    customer_dict["customer_image_path"] = "/api/customer/image/" + \
+                        str(customer_dict["id"])
                 r.append(customer_dict)
             return r
         elif table == "employee":
             if "password_hash" in key:
-                password=key.pop("password_hash")
+                password = key.pop("password_hash")
                 r = Employee.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
@@ -60,25 +63,27 @@ def search(key,table):#key is a dict variable used to search required row in tar
         elif table == "appointment":
             # preprocessing
             if "appointment_date" in key:
-                key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
+                key["appointment_date"] = datetime.datetime.fromtimestamp(
+                    key["appointment_date"])
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
             appointments = Appointment.query.filter_by(**key).all()
-            r=[]
+            r = []
             for appointment in appointments:
                 temp = appointment.__dict__
 
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]= "http://47.94.166.75:3000/api/appointment/image/" + str(temp["app_primary_key"])
+                    temp["pet_image_path"] = "/api/appointment/image/" + \
+                        str(temp["app_primary_key"])
 
                 r.append(temp)
             # if index is None:
             #     return sorted(r,key=lambda item:item[orderBy],reverse=True),len(r)
             # else:
-            return sorted(r[(index-1)*15:index*15],key=lambda item:item[orderBy],reverse=True),len(r)
+            return sorted(r[(index-1)*15:index*15], key=lambda item: item[orderBy], reverse=True), len(r)
         elif table == "answer":
             # preprocessing
             if key.get("content") is not None:
@@ -89,22 +94,27 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
             if content is not None:
-                answers = Answer.query.filter_by(**key).filter(Answer.content.like("%" + content + "%")).all()
+                answers = Answer.query.filter_by(
+                    **key).filter(Answer.content.like("%" + content + "%")).all()
             else:
                 answers = Answer.query.filter_by(**key).all()
             for answer in answers:
                 answer_dict = answer.__dict__
                 answer_dict["date"] = answer_dict["date"].timestamp()
                 if answer.customer_id is not None:
-                    answer_dict.update({"user_type":"customer"})
-                    answer_dict.update({"username":answer.customer_answerer.__dict__.get("username")})
-                    answer_dict.update({"user_id":answer_dict.pop("customer_id")})
+                    answer_dict.update({"user_type": "customer"})
+                    answer_dict.update(
+                        {"username": answer.customer_answerer.__dict__.get("username")})
+                    answer_dict.update(
+                        {"user_id": answer_dict.pop("customer_id")})
                 elif answer.employee_id is not None:
                     answer_dict.update({"user_type": "employee"})
-                    answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
-                    answer_dict.update({"user_id": answer_dict.pop("employee_id")})
+                    answer_dict.update(
+                        {"username": answer.employee_answerer.__dict__.get("username")})
+                    answer_dict.update(
+                        {"user_id": answer_dict.pop("employee_id")})
                 r.append(answer_dict)
-            return r[(index-1)*15:index*15],len(r)
+            return r[(index-1)*15:index*15], len(r)
         elif table == "question":
             # preprocessing
             if key.get("content") is not None:
@@ -115,48 +125,56 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
             if content is not None:
-                questions = Question.query.filter_by(**key).filter(Question.content.like("%" + content + "%")).all()
+                questions = Question.query.filter_by(
+                    **key).filter(Question.content.like("%" + content + "%")).all()
             else:
                 questions = Question.query.filter_by(**key).all()
             for question in questions:
                 question_dict = question.__dict__
 
                 question_dict["date"] = question_dict["date"].timestamp()
-                question_dict.update({"user_type":"customer"})
-                question_dict.update({"username":question.questioner.__dict__.get("username")})
-                question_dict.update({"user_id":question_dict.get("questioner_id")})
+                question_dict.update({"user_type": "customer"})
+                question_dict.update(
+                    {"username": question.questioner.__dict__.get("username")})
+                question_dict.update(
+                    {"user_id": question_dict.get("questioner_id")})
 
                 r.append(question_dict)
-            return r[(index-1)*15:index*15],len(r)
+            return r[(index-1)*15:index*15], len(r)
         elif table == "operation":
             # preprocessing
             if key.get("surgery_begin_time") is not None:
-                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(key["surgery_begin_time"])
+                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(
+                    key["surgery_begin_time"])
             if key.get("release_time") is not None:
-                key["release_time"] = datetime.datetime.fromtimestamp(key["release_time"])
+                key["release_time"] = datetime.datetime.fromtimestamp(
+                    key["release_time"])
             operations = Operation.query.filter_by(**key).all()
             for operation in operations:
                 operation_dict = operation.__dict__
-                operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
-                operation_dict["release_time"] = operation_dict["release_time"].timestamp()
+                operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp(
+                )
+                operation_dict["release_time"] = operation_dict["release_time"].timestamp(
+                )
                 r.append(operation_dict)
-            return r[(index-1)*15:index*15],len(r)                
+            return r[(index-1)*15:index*15], len(r)
         elif table == "pet":
             r = Pet.query.filter_by(**key).all()
         else:
             return 0
-        return to_dict(r)[(index-1)*15:index*15],len(r)
+        return to_dict(r)[(index-1)*15:index*15], len(r)
     except BaseException:
         traceback.print_exc()
         return 0
 
-def searchAll(table):#select * from table
+
+def searchAll(table):  # select * from table
     # when search for the data in answer and question table, it will return the data with the user binded
     try:
         table = table.lower()
-        r=[]
+        r = []
         if table == "customer":
-            customers=Customer.query.all()
+            customers = Customer.query.all()
             for customer in customers:
                 customer_dict = customer.__dict__
                 if customer_dict["customer_image_path"] is not None:
@@ -182,12 +200,16 @@ def searchAll(table):#select * from table
                 answer_dict["date"] = answer_dict["date"].timestamp()
                 if answer.customer_id is not None:
                     answer_dict.update({"user_type": "customer"})
-                    answer_dict.update({"username": answer.customer_answerer.__dict__.get("username")})
-                    answer_dict.update({"user_id": answer_dict.pop("customer_id")})
+                    answer_dict.update(
+                        {"username": answer.customer_answerer.__dict__.get("username")})
+                    answer_dict.update(
+                        {"user_id": answer_dict.pop("customer_id")})
                 elif answer.employee_id is not None:
                     answer_dict.update({"user_type": "employee"})
-                    answer_dict.update({"username": answer.employee_answerer.__dict__.get("username")})
-                    answer_dict.update({"user_id": answer_dict.pop("employee_id")})
+                    answer_dict.update(
+                        {"username": answer.employee_answerer.__dict__.get("username")})
+                    answer_dict.update(
+                        {"user_id": answer_dict.pop("employee_id")})
                 r.append(answer_dict)
             return r
         elif table == "question":
@@ -196,16 +218,20 @@ def searchAll(table):#select * from table
                 question_dict = question.__dict__
                 question_dict["date"] = question_dict["date"].timestamp()
                 question_dict.update({"user_type": "customer"})
-                question_dict.update({"username": question.questioner.__dict__.get("username")})
-                question_dict.update({"user_id": question_dict.get("questioner_id")})
+                question_dict.update(
+                    {"username": question.questioner.__dict__.get("username")})
+                question_dict.update(
+                    {"user_id": question_dict.get("questioner_id")})
                 r.append(question_dict)
             return r
         elif table == "operation":
             operations = Operation.query.all()
             for operation in operations:
                 operation_dict = operation.__dict__
-                operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
-                operation_dict["release_time"] = operation_dict["release_time"].timestamp()
+                operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp(
+                )
+                operation_dict["release_time"] = operation_dict["release_time"].timestamp(
+                )
                 r.append(operation_dict)
             return r
         elif table == "pet":
@@ -217,47 +243,56 @@ def searchAll(table):#select * from table
         traceback.print_exc()
         return 0
 
-def insert(data,table):#data is a dict object,
+
+def insert(data, table):  # data is a dict object,
     # constraints:appointment must be insert with appointment_date
     try:
         # data=json.loads(data)
-        table=table.lower()
-        if table=="customer":
+        table = table.lower()
+        if table == "customer":
             if "password_hash" in data:
-                password_hash = generate_password_hash(str(data["password_hash"]))
-                data["password_hash"]= password_hash
+                password_hash = generate_password_hash(
+                    str(data["password_hash"]))
+                data["password_hash"] = password_hash
             if "customer_image_path" in data:
                 id = len(Customer.query.all()) + 1
                 with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
                     image.write(base64.b64decode(data["customer_image_path"]))
-                    data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + ".jpg"
+                    data["customer_image_path"] = "uploaded_image\customer_image_path\\" + \
+                        str(id) + ".jpg"
             db.session.add(Customer(**data))
-        elif table=="employee":
+        elif table == "employee":
             if "password_hash" in data:
-                password_hash = generate_password_hash(str(data["password_hash"]))
-                data["password_hash"]= password_hash
+                password_hash = generate_password_hash(
+                    str(data["password_hash"]))
+                data["password_hash"] = password_hash
             db.session.add(Employee(**data))
         elif table == "appointment":
             # preprocessing
-            data["appointment_date"] = datetime.datetime.fromtimestamp(data["appointment_date"])
+            data["appointment_date"] = datetime.datetime.fromtimestamp(
+                data["appointment_date"])
             if data.get("date") is not None:
                 data["date"] = datetime.datetime.fromtimestamp(data["date"])
 
-            d={}
-            d["appointment_date"]=data["appointment_date"]
-            appointments=Appointment.query.filter_by(**d).all()
+            d = {}
+            d["appointment_date"] = data["appointment_date"]
+            appointments = Appointment.query.filter_by(**d).all()
             if len(appointments) != 0:
-                maxId=len(appointments)
+                maxId = len(appointments)
                 # print(maxId)
                 if maxId < APPOINTMENT_LIMIT:
                     data["id"] = maxId + 1
                     if data.get("pet_image_path") is not None:
-                        if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) ):
-                            os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) )
-                        with open("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg","wb") as image:
-                            image.write(base64.b64decode(data["pet_image_path"]))
-                        data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg"
-                    db.session.add(Pet(owner_id=data.get("customer_id"),pet_name=data.get("pet_name"),pet_gender=data.get("pet_gender"),pet_species=data.get("species")))
+                        if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp())):
+                            os.mkdir("uploaded_image\pet_image_path\\" +
+                                     str(data["appointment_date"].timestamp()))
+                        with open("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg", "wb") as image:
+                            image.write(base64.b64decode(
+                                data["pet_image_path"]))
+                        data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(
+                            data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg"
+                    db.session.add(Pet(owner_id=data.get("customer_id"), pet_name=data.get(
+                        "pet_name"), pet_gender=data.get("pet_gender"), pet_species=data.get("species")))
                     db.session.add(Appointment(**data))
                 else:
                     return 0
@@ -266,10 +301,11 @@ def insert(data,table):#data is a dict object,
                 if data.get("pet_image_path") is not None:
                     if not os.path.exists(
                             "uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp())):
-                        os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()))
+                        os.mkdir("uploaded_image\pet_image_path\\" +
+                                 str(data["appointment_date"].timestamp()))
                     with open(
                             "uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(
-                                    data["id"]) + ".jpg", "wb") as image:
+                                data["id"]) + ".jpg", "wb") as image:
                         image.write(base64.b64decode(data["pet_image_path"]))
                     data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(
                         data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg"
@@ -282,7 +318,7 @@ def insert(data,table):#data is a dict object,
             user_id = data.pop("user_id")
             user_type = data.pop("user_type")
             if user_type.lower() == "customer":
-                data.update({"customer_id":user_id})
+                data.update({"customer_id": user_id})
             else:
                 data.update({"employee_id": user_id})
             if data.get("date") is not None:
@@ -296,8 +332,10 @@ def insert(data,table):#data is a dict object,
 
             db.session.add(Question(**data))
         elif table == "operation":
-            data["surgery_begin_time"] = datetime.datetime.fromtimestamp(data["surgery_begin_time"])
-            data["release_time"] = datetime.datetime.fromtimestamp(data["release_time"])
+            data["surgery_begin_time"] = datetime.datetime.fromtimestamp(
+                data["surgery_begin_time"])
+            data["release_time"] = datetime.datetime.fromtimestamp(
+                data["release_time"])
             db.session.add(Operation(**data))
         else:
             return 0
@@ -307,13 +345,14 @@ def insert(data,table):#data is a dict object,
         traceback.print_exc()
         return 0
 
-def delete(key,table):#key is a dict variable used to search required row in target table
+
+def delete(key, table):  # key is a dict variable used to search required row in target table
     try:
         # key = json.loads(key)
         table = table.lower()
-        items=[]
+        items = []
         if table == "customer":
-            items=Customer.query.filter_by(**key).all()
+            items = Customer.query.filter_by(**key).all()
             for customer in items:
                 if customer.customer_image_path is not None:
                     os.remove(customer.customer_image_path)
@@ -322,7 +361,8 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         elif table == "appointment":
             # preprocessing
             if key.get("appointment_date") is not None:
-                key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
+                key["appointment_date"] = datetime.datetime.fromtimestamp(
+                    key["appointment_date"])
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
@@ -345,9 +385,11 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         elif table == "operation":
             # preprocessing key
             if key.get("surgery_begin_time") is not None:
-                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(key["surgery_begin_time"])
+                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(
+                    key["surgery_begin_time"])
             if key.get("release_time") is not None:
-                key["release_time"] = datetime.datetime.fromtimestamp(key["release_time"])
+                key["release_time"] = datetime.datetime.fromtimestamp(
+                    key["release_time"])
 
             items = Operation.query.filter_by(**key).all()
         else:
@@ -360,7 +402,8 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         traceback.print_exc()
         return 0
 
-def modify(key,data,table):#key is a dict variable used to search required row in target table,data is the modifed data
+
+def modify(key, data, table):  # key is a dict variable used to search required row in target table,data is the modifed data
     # only support modify one row at a time
     try:
         # key = json.loads(key)
@@ -372,18 +415,21 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                 old_password = key.pop("old_password")
                 if "password_hash" in data:
                     new_password = data.pop("password_hash")
-                    if check_password_hash(Customer.query.filter_by(**key).first().password_hash,old_password):
-                        data["password_hash"]= generate_password_hash(str(new_password))
+                    if check_password_hash(Customer.query.filter_by(**key).first().password_hash, old_password):
+                        data["password_hash"] = generate_password_hash(
+                            str(new_password))
             if "customer_image_path" in data:
                 print(1)
-                old_image_path = Customer.query.filter_by(**key).first().customer_image_path
+                old_image_path = Customer.query.filter_by(
+                    **key).first().customer_image_path
                 if old_image_path is not None:
                     os.remove(old_image_path)
                 id = key["id"]
                 with open("uploaded_image\customer_image_path\\" + str(id) + ".jpg", "wb") as image:
                     print(2)
                     image.write(base64.b64decode(data["customer_image_path"]))
-                    data["customer_image_path"] = "uploaded_image\customer_image_path\\" + str(id) + ".jpg"
+                    data["customer_image_path"] = "uploaded_image\customer_image_path\\" + \
+                        str(id) + ".jpg"
             Customer.query.filter_by(**key).update(data)
         elif table == "employee":
             if key.get("old_password") is not None:
@@ -391,25 +437,30 @@ def modify(key,data,table):#key is a dict variable used to search required row i
                 if "password_hash" in data:
                     new_password = data.pop("password_hash")
                     if check_password_hash(Employee.query.filter_by(**key).first().password_hash, old_password):
-                        data["password_hash"] = generate_password_hash(str(new_password))
+                        data["password_hash"] = generate_password_hash(
+                            str(new_password))
             Employee.query.filter_by(**key).update(data)
         elif table == "appointment":
             # preprocessing key
             if key.get("appointment_date") is not None:
-                key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
+                key["appointment_date"] = datetime.datetime.fromtimestamp(
+                    key["appointment_date"])
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
             # preprocessing data
             if data.get("appointment_date") is not None:
-                data["appointment_date"] = datetime.datetime.fromtimestamp(data["appointment_date"])
+                data["appointment_date"] = datetime.datetime.fromtimestamp(
+                    data["appointment_date"])
             if data.get("date") is not None:
                 data["date"] = datetime.datetime.fromtimestamp(data["date"])
             if data.get("pet_image_path") is not None:
-                pet_image_path = Appointment.query.filter_by(**key).first().pet_image_path
+                pet_image_path = Appointment.query.filter_by(
+                    **key).first().pet_image_path
                 os.remove(pet_image_path)
-                if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) ):
-                    os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) )
+                if not os.path.exists("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp())):
+                    os.mkdir("uploaded_image\pet_image_path\\" +
+                             str(data["appointment_date"].timestamp()))
                 with open(pet_image_path, "wb") as image:
                     image.write(base64.b64decode(data["pet_image_path"]))
                     data["pet_image_path"] = pet_image_path
@@ -438,15 +489,19 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         elif table == "operation":
             # preprocessing key
             if key.get("surgery_begin_time") is not None:
-                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(key["surgery_begin_time"])
+                key["surgery_begin_time"] = datetime.datetime.fromtimestamp(
+                    key["surgery_begin_time"])
             if key.get("release_time") is not None:
-                key["release_time"] = datetime.datetime.fromtimestamp(key["release_time"])
+                key["release_time"] = datetime.datetime.fromtimestamp(
+                    key["release_time"])
 
             # preprocessing data
             if data.get("surgery_begin_time") is not None:
-                data["surgery_begin_time"] = datetime.datetime.fromtimestamp(data["surgery_begin_time"])
+                data["surgery_begin_time"] = datetime.datetime.fromtimestamp(
+                    data["surgery_begin_time"])
             if data.get("release_time") is not None:
-                data["release_time"] = datetime.datetime.fromtimestamp(data["release_time"])
+                data["release_time"] = datetime.datetime.fromtimestamp(
+                    data["release_time"])
 
             Operation.query.filter_by(**key).update(data)
         else:
@@ -457,7 +512,9 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         traceback.print_exc()
         return 0
 
-def searchTimeSpan(key,table):#The key format should be {"column":"...","start":datetime.datetime(yaer,month,day),"end":datetime.datetime(yaer,month,day)}
+
+# The key format should be {"column":"...","start":datetime.datetime(yaer,month,day),"end":datetime.datetime(yaer,month,day)}
+def searchTimeSpan(key, table):
     # only support search time span for appointment, question ,answer ,operation
     try:
         # preprocessing
@@ -469,54 +526,66 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
             orderBy = key.pop("orderBy")
         else:
             orderBy = "appointment_date"
-        key["start"]=datetime.datetime.fromtimestamp(key["start"])
+        key["start"] = datetime.datetime.fromtimestamp(key["start"])
         key["end"] = datetime.datetime.fromtimestamp(key["end"])
 
         table = table.lower()
-        r=[]
+        r = []
         if table == "appointment":
-            appointments=Appointment.query.filter(getattr(Appointment,key["column"]) >= key["start"]).filter(getattr(Appointment,key["column"]) <= key["end"])
+            appointments = Appointment.query.filter(getattr(Appointment, key["column"]) >= key["start"]).filter(
+                getattr(Appointment, key["column"]) <= key["end"])
             for appointment in appointments:
                 temp = appointment.__dict__
 
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
+                    temp["pet_image_path"] = mp.imread(temp["pet_image_path"])
 
                 r.append(temp)
             return sorted(r[(index - 1) * 15:index * 15], key=lambda item: item[orderBy], reverse=True)
         elif table == "answer":
-            answers=Answer.query.filter(getattr(Answer,key["column"]) >= key["start"]).filter(getattr(Answer,key["column"]) <= key["end"])
+            answers = Answer.query.filter(getattr(Answer, key["column"]) >= key["start"]).filter(
+                getattr(Answer, key["column"]) <= key["end"])
             for answer in answers:
                 answer_dict = answer.__dict__
                 answer_dict["date"] = answer_dict["date"].timestamp()
                 if answer.customer_id is not None:
-                    answer_dict.update({"user_type":"customer"})
-                    answer_dict.update({"username":answer.customer_answerer.__dict__.get("username")})
-                    answer_dict.update({"user_id":answer_dict.pop("customer_id")})
+                    answer_dict.update({"user_type": "customer"})
+                    answer_dict.update(
+                        {"username": answer.customer_answerer.__dict__.get("username")})
+                    answer_dict.update(
+                        {"user_id": answer_dict.pop("customer_id")})
                 elif answer.employee_id is not None:
                     answer_dict.update({"user_type": "employee"})
-                    answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
-                    answer_dict.update({"user_id": answer_dict.pop("employee_id")})
+                    answer_dict.update(
+                        {"username": answer.employee_answerer.__dict__.get("username")})
+                    answer_dict.update(
+                        {"user_id": answer_dict.pop("employee_id")})
                 r.append(answer_dict)
         elif table == "question":
-            questions=Question.query.filter(getattr(Question,key["column"]) >= key["start"]).filter(getattr(Question,key["column"]) <= key["end"])
+            questions = Question.query.filter(getattr(Question, key["column"]) >= key["start"]).filter(
+                getattr(Question, key["column"]) <= key["end"])
             for question in questions:
                 question_dict = question.__dict__
 
                 question_dict["date"] = question_dict["date"].timestamp()
-                question_dict.update({"user_type":"customer"})
-                question_dict.update({"username":question.questioner.__dict__.get("username")})
-                question_dict.update({"user_id":question_dict.get("questioner_id")})
+                question_dict.update({"user_type": "customer"})
+                question_dict.update(
+                    {"username": question.questioner.__dict__.get("username")})
+                question_dict.update(
+                    {"user_id": question_dict.get("questioner_id")})
 
                 r.append(question_dict)
         elif table == "operation":
-            operations=Operation.query.filter(getattr(Operation,key["column"]) >= key["start"]).filter(getattr(Operation,key["column"]) <= key["end"])
+            operations = Operation.query.filter(getattr(Operation, key["column"]) >= key["start"]).filter(
+                getattr(Operation, key["column"]) <= key["end"])
             for operation in operations:
                 operation_dict = operation.__dict__
-                operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
-                operation_dict["release_time"] = operation_dict["release_time"].timestamp()
+                operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp(
+                )
+                operation_dict["release_time"] = operation_dict["release_time"].timestamp(
+                )
                 r.append(operation_dict)
         else:
             return 0
@@ -525,19 +594,20 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
         traceback.print_exc()
         return 0
 
-def searchImage(key,table):
+
+def searchImage(key, table):
     table = table.lower()
     b = None
     if table == "customer":
         customer = Customer.query.filter_by(**key).first()
         if customer.customer_image_path is not None:
-            with open(customer.customer_image_path,"rb") as image:
-                b=bytes(image.read())
+            with open(customer.customer_image_path, "rb") as image:
+                b = bytes(image.read())
         return b
-    elif table=="appointment":
+    elif table == "appointment":
         appointment = Appointment.query.filter_by(**key).first()
         if appointment.pet_image_path is not None:
-            with open(appointment.pet_image_path,"rb") as image:
+            with open(appointment.pet_image_path, "rb") as image:
                 b = bytes(image.read())
         return b
 

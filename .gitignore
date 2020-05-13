@@ -6,7 +6,8 @@ models/database.db
 
 
 #dependencies
-
+flaskenv
+uploaded_image
 
 #testing
 
