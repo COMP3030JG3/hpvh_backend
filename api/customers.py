@@ -10,14 +10,6 @@ from flask import make_response
 import io
 from PIL import Image,ImageFont, ImageDraw, ImageFilter
 import random
-# ------------------------------------------------------------------------------------------------------------------------------------#
-
-# @app.route('/api/customer/getinfo',methods=['GET'])
-# @auth.login_required
-# def user_info():
-#     customer = getCustomer()
-#     info = {"id":customer.get("id")}
-#     return status(200,data = info)
 
 @app.route('/api/customer/register', methods=['POST']) 
 def user_register():
@@ -34,7 +26,7 @@ def user_register():
     if test.lower() != session['image'].lower():
         return status(4103,'Incorrect verification code')
 
-    if DBUtil.search(username,"customer")[0]:
+    if DBUtil.search(username,"customer"):
         return status(4103,'exist username')
     else:
         return_status = DBUtil.insert(register_res,"customer")    
@@ -58,7 +50,7 @@ def user_login():
     if not user:
         return status(4103,'error username or password')
     else:
-        user_id = user[0][0].get('id')                               #咋回事啊   变成两个[0][0] 了
+        user_id = user[0].get('id')                              
         return generate_token(user_id,"customer")
         
 
@@ -81,7 +73,7 @@ def appointment_create():
     pets["pet_species"] = appointment_res.get("species")
 
     succusse = DBUtil.search(pets,"pet")              #没找到才插入
-    print(succusse)
+
     if not succusse:
         DBUtil.insert(pets,"pet")
     
@@ -140,15 +132,14 @@ def user_appointment_get(id):      #id是appointment的id
     # print("-------------------------------------")
     appointments,length = DBUtil.search(inpu,"appointment")
 
-    for a in appointments:
-        a.pop('_sa_instance_state')
-    return_appointment = {}
-    return_appointment["total"] = length
-    return_appointment["count"] = 0 if appointments==0 else len(appointments)
-    return_appointment["index"] = id
-    return_appointment["item"] = appointments
-
     if appointments:
+        for a in appointments:
+            a.pop('_sa_instance_state')
+        return_appointment = {}
+        return_appointment["total"] = length
+        return_appointment["count"] = 0 if appointments==0 else len(appointments)
+        return_appointment["index"] = id
+        return_appointment["item"] = appointments
         return status(200,'get appointment successfully',return_appointment)       # appointment 是一个数组
     else:      
         return status(404)  #如果没有该appointment   或   搜索出错
@@ -159,12 +150,11 @@ def user_profile_get():
 
     #获取用户信息
     current_customer = getCustomer()
+    profile = DBUtil.search({'id':current_customer['id']},'customer')
 
-    profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
-    profile[0].pop("_sa_instance_state")
-    profile[0].pop("password_hash")
     if profile:
-        print(profile)
+        profile[0].pop("_sa_instance_state")
+        profile[0].pop("password_hash")
         return status(200,'get profile successfully',profile)
     else:
         return status(404)
@@ -177,7 +167,7 @@ def user_profile_modify():
 
     profile_res = request.get_json()
 
-    profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
+    profile ,length = DBUtil.search({'id':current_customer['id']},'customer')
     
     if profile:
         success = DBUtil.modify({'id':current_customer['id']},profile_res,'customer')
@@ -225,16 +215,15 @@ def user_operation_get(id):
 
     operations, length = DBUtil.search(inpu,'operation')
 
-    for o in operations:
-        o.pop("_sa_instance_state")
-        
-    return_operation = {}
-    return_operation["total"] = length
-    return_operation["count"] = 0 if operations==0 else len(operations)
-    return_operation["index"] = id
-    return_operation["item"] = operations
-    
     if operations:
+        for o in operations:
+            o.pop("_sa_instance_state")
+        return_operation = {}
+        return_operation["total"] = length
+        return_operation["count"] = 0 if operations==0 else len(operations)
+        return_operation["index"] = id
+        return_operation["item"] = operations
+
         return status(200,'get operation successfully',return_operation)
     else:      
         return status(404)  
@@ -250,7 +239,7 @@ def validate_picture():
     #生成一个新图片对象
     im = Image.new('RGB', (width, height), 'white')
     # 设置字体
-    font = ImageFont.truetype('C:\\Users\\79964\\Desktop\\app\\4\\static\\Calibri-Bold.ttf', 40)
+    font = ImageFont.truetype('\\CALIFB.TTF', 40)
     # font = ImageFont.load_default().font
     # 创建draw对象
     draw = ImageDraw.Draw(im)
@@ -272,7 +261,7 @@ def validate_picture():
     im = im.filter(ImageFilter.FIND_EDGES)
     return im, str1
 
-@app.route('/api/customer/code/',methods=['GET'])
+@app.route('/api/customer/code',methods=['GET'])
 def get_code():
     image, str1 = validate_picture()
     # 讲验证码图片以二进制形式写入内存，防止图片都放在文件夹中，占用磁盘空间
@@ -286,9 +275,36 @@ def get_code():
     session['image'] = str1
     return response
 
+@app.route('/api/appointment/image/<int:id>',methods=['GET'])   # appointment 的id
+def pet_image(id):
 
-@app.route('/api/customer/test',methods=['GET'])
-def test():
-    print(session['image'])
-    print(session['image'].lower())
-    return "0"
+    # with open('13690.html1.jpg',"rb") as image:
+    #     b=bytes(image.read())
+    # print(type(b))
+    # response = make_response(b)
+    # response.headers['Content-Type'] = 'image/gif'
+    # 测试
+    
+    byte = DBUtil.searchImage({"app_primary_key":id},'appointment')        #传给你  appointment  的 primary key id， 返回二进制
+    if byte is None:
+        return status('403','no photos')
+    response = make_response(byte)
+    response.headers['Content-Type'] = 'image/gif'
+    return response
+
+
+@app.route('/api/customer/image/<int:id>',methods=['GET'])   #  customer自己的
+def customer_image(id):
+
+    byte = DBUtil.searchImage({"id":id},'customer')         #传给你  customer id，  返回二进制
+    if byte is None:
+        return status('403','no photos')
+    response = make_response(byte)
+    response.headers['Content-Type'] = 'image/gif'
+    return response
+
+# @app.route('/api/customer/test',methods=['GET'])
+# def test():
+#     print(session['image'])
+#     print(session['image'].lower())
+#     return "0"
