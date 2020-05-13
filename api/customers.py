@@ -10,14 +10,6 @@ from flask import make_response
 import io
 from PIL import Image,ImageFont, ImageDraw, ImageFilter
 import random
-# ------------------------------------------------------------------------------------------------------------------------------------#
-
-# @app.route('/api/customer/getinfo',methods=['GET'])
-# @auth.login_required
-# def user_info():
-#     customer = getCustomer()
-#     info = {"id":customer.get("id")}
-#     return status(200,data = info)
 
 @app.route('/api/customer/register', methods=['POST']) 
 def user_register():
@@ -140,18 +132,14 @@ def user_appointment_get(id):      #id是appointment的id
     # print("-------------------------------------")
     appointments,length = DBUtil.search(inpu,"appointment")
 
-    # print(type(a['pet_i']))
-
-    for a in appointments:
-        a.pop('_sa_instance_state')
-
-    return_appointment = {}
-    return_appointment["total"] = length
-    return_appointment["count"] = 0 if appointments==0 else len(appointments)
-    return_appointment["index"] = id
-    return_appointment["item"] = appointments
-
     if appointments:
+        for a in appointments:
+            a.pop('_sa_instance_state')
+        return_appointment = {}
+        return_appointment["total"] = length
+        return_appointment["count"] = 0 if appointments==0 else len(appointments)
+        return_appointment["index"] = id
+        return_appointment["item"] = appointments
         return status(200,'get appointment successfully',return_appointment)       # appointment 是一个数组
     else:      
         return status(404)  #如果没有该appointment   或   搜索出错
@@ -162,10 +150,11 @@ def user_profile_get():
 
     #获取用户信息
     current_customer = getCustomer()
-    profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
-    profile.pop("_sa_instance_state")
-    profile.pop("password_hash")
+    profile = DBUtil.search({'id':current_customer['id']},'customer')
+
     if profile:
+        profile[0].pop("_sa_instance_state")
+        profile[0].pop("password_hash")
         return status(200,'get profile successfully',profile)
     else:
         return status(404)
@@ -178,7 +167,7 @@ def user_profile_modify():
 
     profile_res = request.get_json()
 
-    profile = DBUtil.search({'id':current_customer['id']},'customer')[0]
+    profile ,length = DBUtil.search({'id':current_customer['id']},'customer')
     
     if profile:
         success = DBUtil.modify({'id':current_customer['id']},profile_res,'customer')
@@ -226,16 +215,15 @@ def user_operation_get(id):
 
     operations, length = DBUtil.search(inpu,'operation')
 
-    for o in operations:
-        o.pop("_sa_instance_state")
-        
-    return_operation = {}
-    return_operation["total"] = length
-    return_operation["count"] = 0 if operations==0 else len(operations)
-    return_operation["index"] = id
-    return_operation["item"] = operations
-    
     if operations:
+        for o in operations:
+            o.pop("_sa_instance_state")
+        return_operation = {}
+        return_operation["total"] = length
+        return_operation["count"] = 0 if operations==0 else len(operations)
+        return_operation["index"] = id
+        return_operation["item"] = operations
+
         return status(200,'get operation successfully',return_operation)
     else:      
         return status(404)  
@@ -315,8 +303,8 @@ def customer_image(id):
     response.headers['Content-Type'] = 'image/gif'
     return response
 
-@app.route('/api/customer/test',methods=['GET'])
-def test():
-    print(session['image'])
-    print(session['image'].lower())
-    return "0"
+# @app.route('/api/customer/test',methods=['GET'])
+# def test():
+#     print(session['image'])
+#     print(session['image'].lower())
+#     return "0"

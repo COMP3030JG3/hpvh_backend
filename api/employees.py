@@ -8,12 +8,12 @@ import re
 
 ###--------------------已完成---------------------------####
 
-@app.route('/api/employee/getinfo',methods=['GET'])
-@auth.login_required
-def employee_info():
-    employee = getEmployee()
-    info = {"id":employee.get("id")}
-    return status(200,data = info)
+# @app.route('/api/employee/getinfo',methods=['GET'])
+# @auth.login_required
+# def employee_info():
+#     employee = getEmployee()
+#     info = {"id":employee.get("id")}
+#     return status(200,data = info)
 
 @app.route('/api/employee/register', methods=['POST'])
 def employee_register():
@@ -21,9 +21,8 @@ def employee_register():
     register_res = request.get_json()     # 获得前端来的json数据,格式应该是 {username：,password：,email:, phone_num:, address:, }
 
     username = {"username":register_res.get("username")}   #提取有用信息(username)
-    print(username)
+
     if DBUtil.search(username,"employee")[0]:
-        print(DBUtil.search(username,"employee"))
         return status(4103,'exist username')
     else:
         return_status = DBUtil.insert(register_res,"employee")    
@@ -65,19 +64,18 @@ def employee_appointment_get(id):
     for i in range(0,len(para)):
         inpu[para[i]] = value[i]
 
-    # inpu['appointment_date'] = '2020-02-05 00:00:00'
     appointments, length  = DBUtil.search(inpu,'appointment')   
 
-    for a in appointments:
-        a.pop('_sa_instance_state')
-
-    return_appointment = {}
-    return_appointment["total"] = length
-    return_appointment["count"] = 0 if appointments==0 else len(appointments)
-    return_appointment["index"] = id
-    return_appointment["item"] = appointments
-
     if appointments:
+        for a in appointments:
+            a.pop('_sa_instance_state')
+
+        return_appointment = {}
+        return_appointment["total"] = length
+        return_appointment["count"] = 0 if appointments==0 else len(appointments)
+        return_appointment["index"] = id
+        return_appointment["item"] = appointments
+
         return status(200,'get appointment successfully',return_appointment)
     else:      
         return status(404)  #如果没有该appointment   或   搜索出错
@@ -103,10 +101,10 @@ def employee_profile_get():
     current_employee = getEmployee()
 
     profile = DBUtil.search({'id':current_employee['id']},'employee')[0]
-    profile[0].pop("_sa_instance_state")
-    profile[0].pop("password_hash")
 
     if profile:
+        profile[0].pop("_sa_instance_state")
+        profile[0].pop("password_hash")
         return status(200,'get profile successfully',profile)
     else:
         return status(404)
@@ -136,11 +134,17 @@ def employee_operation_create():
     
     operation_res = request.get_json()
 
+    if 'appointment_id' not in operation_res:
+        return status(4103,'must have appointment_id')
+    appointment ,length = DBUtil.search({'app_primary_key':operation_res.get('appointment_id')},'appointment')
+    if not appointment:
+        return status(4103,'wrong appointment_id')
+    operation_res['customer_id'] = appointment[0].get('customer_id')
+
     if DBUtil.insert(operation_res,'operation'):
         return status(201,'create operation success')
     else:
         return status(4103,'failed to create operation')
-
 
 @app.route('/api/employee/operation/<int:id>',methods = ['GET'])
 @auth.login_required
@@ -157,17 +161,17 @@ def employee_operation_get(id):
         inpu[para[i]] = value[i]
         
     operations,length = DBUtil.search(inpu,'operation') 
-
-    for o in operations:
-        o.pop("_sa_instance_state")
-
-    return_operation = {}
-    return_operation["total"] = length
-    return_operation["count"] = 0 if operations==0 else len(operations)
-    return_operation["index"] = id
-    return_operation["item"] = operations
     
     if operations:
+        
+        for o in operations:
+            o.pop("_sa_instance_state")
+
+        return_operation = {}
+        return_operation["total"] = length
+        return_operation["count"] = 0 if operations==0 else len(operations)
+        return_operation["index"] = id
+        return_operation["item"] = operations
         return status(200,'get operation successfully',return_operation)
     else:      
         return status(404)  #如果没有该operation   或   搜索出错
@@ -177,7 +181,6 @@ def employee_operation_get(id):
 def employee_operation_modify(id):
     
     operation_res = request.get_json()
-    print(operation_res)
     if not DBUtil.modify({'id':id},operation_res,'operation'):
         return status(403,'update fails')
     return status(201,'update successfully')
@@ -189,15 +192,18 @@ def employee_search(id):
     level = current_employee.get('level')
     if level == "administrator":
         employees,length = DBUtil.search({'index':id},'employee')
-        for ee in employees:
-            ee.pop("_sa_instance_state")
-            ee.pop("password_hash")
-        e = {}
-        e['total'] = length
-        e['count'] =  0 if employees==0 else len(employees)
-        e['index'] = id
-        e['item'] = employees
-        return status(200,'get employees successfully',e)
+        if employees:
+            for ee in employees:
+                ee.pop("_sa_instance_state")
+                ee.pop("password_hash")
+            e = {}
+            e['total'] = length
+            e['count'] =  0 if employees==0 else len(employees)
+            e['index'] = id
+            e['item'] = employees
+            return status(200,'get employees successfully',e)
+        else:
+            return status(404,'no employees')
     else:
         return status(404,'you have no rights')
 
