@@ -47,12 +47,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
             for customer in customers:
                 customer_dict = customer.__dict__
                 if customer_dict["customer_image_path"] is not None:
-<<<<<<< HEAD
                     customer_dict["customer_image_path"] = customer_dict["id"]
-=======
-                    customer_dict["customer_image_path"] = "/api/customer/image/"+   str(customer_dict["id"])
-
->>>>>>> develop
                 r.append(customer_dict)
             return r
         elif table == "employee":
@@ -77,13 +72,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-<<<<<<< HEAD
                     temp["pet_image_path"]=temp["app_primary_key"]
-=======
-
-                    temp["pet_image_path"]= "/api/appointment/image/" + str(temp["app_primary_key"])
-
->>>>>>> develop
 
                 r.append(temp)
             # if index is None:
@@ -146,12 +135,13 @@ def search(key,table):#key is a dict variable used to search required row in tar
             if key.get("release_time") is not None:
                 key["release_time"] = datetime.datetime.fromtimestamp(key["release_time"])
             operations = Operation.query.filter_by(**key).all()
+
             for operation in operations:
                 operation_dict = operation.__dict__
                 operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
                 operation_dict["release_time"] = operation_dict["release_time"].timestamp()
                 r.append(operation_dict)
-            return r[(index-1)*15:index*15],len(r)                
+            return r
         elif table == "pet":
             r = Pet.query.filter_by(**key).all()
         else:
@@ -527,29 +517,17 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
 
 def searchImage(key,table):
     table = table.lower()
-<<<<<<< HEAD
-=======
-    b = None
->>>>>>> develop
     if table == "customer":
         customer = Customer.query.filter_by(**key).first()
         if customer.customer_image_path is not None:
             with open(customer.customer_image_path,"rb") as image:
-<<<<<<< HEAD
                 b=bytearray(image.read())
-=======
-                b=bytes(image.read())
->>>>>>> develop
         return b
     elif table=="appointment":
         appointment = Appointment.query.filter_by(**key).first()
         if appointment.pet_image_path is not None:
             with open(appointment.pet_image_path,"rb") as image:
-<<<<<<< HEAD
                 b = bytearray(image.read())
-=======
-                b = bytes(image.read())
->>>>>>> develop
         return b
 
 
