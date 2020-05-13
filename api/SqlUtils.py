@@ -263,10 +263,21 @@ def insert(data,table):#data is a dict object,
                 else:
                     return 0
             else:
+                data["id"] = 1
+                if data.get("pet_image_path") is not None:
+                    if not os.path.exists(
+                            "uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp())):
+                        os.mkdir("uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()))
+                    with open(
+                            "uploaded_image\pet_image_path\\" + str(data["appointment_date"].timestamp()) + "\\" + str(
+                                    data["id"]) + ".jpg", "wb") as image:
+                        image.write(base64.b64decode(data["pet_image_path"]))
+                    data["pet_image_path"] = "uploaded_image\pet_image_path\\" + str(
+                        data["appointment_date"].timestamp()) + "\\" + str(data["id"]) + ".jpg"
                 db.session.add(
                     Pet(owner_id=data.get("customer_id"), pet_name=data.get("pet_name"), pet_gender=data.get("pet_gender"),
                         pet_species=data.get("species")))
-                db.session.add(Appointment(id=1,**data))
+                db.session.add(Appointment(**data))
         elif table == "answer":
             # preprocessing
             user_id = data.pop("user_id")
