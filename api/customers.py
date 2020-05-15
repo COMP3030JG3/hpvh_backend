@@ -201,7 +201,7 @@ def user_password_modify():
 
     key = {'id': current_customer.get(
         'id'), 'old_password': password_res.get('old_password')}
-    pa = {'password_hash': password_res.get('new_passowrd')}
+    pa = {'password_hash': password_res.get('new_password')}
     success = DBUtil.modify(key, pa, 'customer')
     if success:
         return status(201, 'update password sucessfully')
