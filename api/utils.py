@@ -89,7 +89,6 @@ def question_create():
 
 
 @app.route('/api/question/<int:id>',methods=['GET'])               
-@auth.login_required
 def question_get(id):
 
     url  = request.url      # request.url: 返回带?，request.base_url返回不带?的
@@ -144,7 +143,6 @@ def answer_create():
         return status(404)
 
 @app.route('/api/answer/<int:id>',methods=['GET'])      #  question 的 id          返回的格式
-@auth.login_required
 def answer_get(id):
     
     url  = request.url      # request.url: 返回带?，request.base_url返回不带?的
@@ -161,8 +159,12 @@ def answer_get(id):
 
     for a in answers:
         a.pop("_sa_instance_state")
-        a.pop("employee_id")
-        a.pop('customer_answerer')
+        if "employee_id" in a:
+            a.pop("employee_id")
+            a.pop('customer_answerer')
+        elif "customer_id" in a:
+            a.pop("customer_id")
+            a.pop("employee_answerer")
 
     if answers:
         return_answers = {}

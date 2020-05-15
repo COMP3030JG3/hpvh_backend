@@ -58,13 +58,13 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 r = Employee.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            employees = Employee.query.filter_by(**key).all()
-            for employee in employees:
-                employee_dict = employee.__dict__
-                # employee_dict.update({"avatar":""})
+            r = Employee.query.filter_by(**key).all()
+            # for employee in employees:
+            #     employee_dict = employee.__dict__
+            #     # employee_dict.update({"avatar":""})
 
-                r.append(employee_dict)
-            return r
+            #     r.append(employee_dict)
+            # return r
         elif table == "appointment":
             # preprocessing
             if "appointment_date" in key:
