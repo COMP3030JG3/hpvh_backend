@@ -252,7 +252,7 @@ def validate_picture():
     # 生成一个新图片对象
     im = Image.new('RGB', (width, height), 'white')
     # 设置字体
-    font = ImageFont.truetype('CALIFB.TTF', 40)
+    font = ImageFont.truetype('\api\CALIFB.TTF', 40)
     # font = ImageFont.load_default().font
     # 创建draw对象
     draw = ImageDraw.Draw(im)
@@ -262,7 +262,7 @@ def validate_picture():
         text = random.choice(total)
         str1 += text
         draw.text((5+random.randint(4, 7)+20*item, 5 +
-                   random.randint(3, 7)), text=text, fill='blue', font=font)
+        random.randint(3, 7)), text=text, fill='blue', font=font)
     # 划几根干扰线
     for num in range(8):
         x1 = random.randint(0, width/2)
