@@ -157,6 +157,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
         return to_dict(r)[(index-1)*15:index*15],len(r)
     except BaseException:
         traceback.print_exc()
+        db.session.rollback()
         return 0
 
 def searchAll(table):#select * from table
@@ -232,6 +233,7 @@ def searchAll(table):#select * from table
         return to_dict(r)
     except BaseException:
         traceback.print_exc()
+        db.session.rollback()
         return 0
 
 def insert(data,table):#data is a dict object,
@@ -322,6 +324,7 @@ def insert(data,table):#data is a dict object,
         return 1
     except BaseException:
         traceback.print_exc()
+        db.session.rollback()
         return 0
 
 def delete(key,table):#key is a dict variable used to search required row in target table
@@ -375,6 +378,7 @@ def delete(key,table):#key is a dict variable used to search required row in tar
         return 1
     except BaseException:
         traceback.print_exc()
+        db.session.rollback()
         return 0
 
 def modify(key,data,table):#key is a dict variable used to search required row in target table,data is the modifed data
@@ -471,6 +475,7 @@ def modify(key,data,table):#key is a dict variable used to search required row i
         return 1
     except BaseException:
         traceback.print_exc()
+        db.session.rollback()
         return 0
 
 def searchTimeSpan(key,table):#The key format should be {"column":"...","start":datetime.datetime(yaer,month,day),"end":datetime.datetime(yaer,month,day)}
@@ -539,23 +544,29 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
         return r[(index-1)*15:index*15]
     except BaseException:
         traceback.print_exc()
+        db.session.rollback()
         return 0
 
 def searchImage(key,table):
-    table = table.lower()
-    b = None
-    if table == "customer":
-        customer = Customer.query.filter_by(**key).first()
-        if customer.customer_image_path is not None:
-            with open(customer.customer_image_path,"rb") as image:
-                b=bytes(image.read())
-        return b
-    elif table=="appointment":
-        appointment = Appointment.query.filter_by(**key).first()
-        if appointment.pet_image_path is not None:
-            with open(appointment.pet_image_path,"rb") as image:
-                b = bytes(image.read())
-        return b
+    try:
+        table = table.lower()
+        b = None
+        if table == "customer":
+            customer = Customer.query.filter_by(**key).first()
+            if customer.customer_image_path is not None:
+                with open(customer.customer_image_path,"rb") as image:
+                    b=bytes(image.read())
+            return b
+        elif table=="appointment":
+            appointment = Appointment.query.filter_by(**key).first()
+            if appointment.pet_image_path is not None:
+                with open(appointment.pet_image_path,"rb") as image:
+                    b = bytes(image.read())
+            return b
+    except BaseException:
+        traceback.print_exc()
+        db.session.rollback()
+        return 0
 
 
 if __name__ == '__main__':
