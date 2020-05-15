@@ -124,11 +124,18 @@ def question_get(id):
 def answer_create():
 
     answer_res = request.get_json()
-
-    if answer_res.get('user_type') == 'customer':
+    
+    if g.customer:
         answer_res['user_id'] = g.customer.get('id')
+        answer_res['user_type'] = 'customer'
     else:
+        answer_res['user_type'] = 'employee'
         answer_res['user_id'] = g.employee.get('id')
+
+    # if answer_res.get('user_type') == 'customer':
+    #     answer_res['user_id'] = g.customer.get('id')
+    # else:
+    #     answer_res['user_id'] = g.employee.get('id')
 
     # {	
     # 	"content":"this is a answer",
