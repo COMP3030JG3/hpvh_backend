@@ -37,12 +37,24 @@ def search(key,table):#key is a dict variable used to search required row in tar
 
         r=[]
         if table == "customer":
+            username=None
+            fullname=None
             if "password_hash" in key:
                 password=key.pop("password_hash")
                 r = Customer.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            customers=Customer.query.filter_by(**key).all()
+            if "username" in key:
+                username = key.pop("username")
+            if "fullname" in key:
+                fullname = key.pop("fullname")
+            customers=Customer.query.filter_by(**key).\
+                filter(Customer.username.like("%"+username+"%")
+                       if username is not None else
+                       Customer.username.like("%%")).\
+                filter(Customer.fullname.like("%"+fullname+"%")
+                       if fullname is not None else
+                       Customer.fullname.like("%%")).all()
             r=[]
             for customer in customers:
                 customer_dict = customer.__dict__
@@ -67,12 +79,17 @@ def search(key,table):#key is a dict variable used to search required row in tar
             return r
         elif table == "appointment":
             # preprocessing
+            pet_name=None
             if "appointment_date" in key:
                 key["appointment_date"] = datetime.datetime.fromtimestamp(key["appointment_date"])
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
+            if "pet_name" in key:
+                pet_name = key.pop("pet_name")
 
-            appointments = Appointment.query.filter_by(**key).all()
+            appointments = Appointment.query.filter_by(**key).filter(Appointment.pet_name.like("%"+pet_name+"%")
+                                                                     if pet_name is not None else
+                                                                     Appointment.pet_name.like("%%")).all()
             r=[]
             for appointment in appointments:
                 temp = appointment.__dict__
@@ -89,6 +106,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
             return sorted(r[(index-1)*15:index*15],key=lambda item:item[orderBy],reverse=True),len(r)
         elif table == "answer":
             # preprocessing
+            content=None
             if key.get("content") is not None:
                 content = key.pop("content")
             else:
@@ -96,10 +114,9 @@ def search(key,table):#key is a dict variable used to search required row in tar
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
-            if content is not None:
-                answers = Answer.query.filter_by(**key).filter(Answer.content.like("%" + content + "%")).all()
-            else:
-                answers = Answer.query.filter_by(**key).all()
+            answers = Answer.query.filter_by(**key).filter(Answer.content.like("%" + content + "%")
+                                                           if content is not None else Answer.content.like("%%") ).all()
+
             for answer in answers:
                 answer_dict = answer.__dict__
                 answer_dict["date"] = answer_dict["date"].timestamp()
@@ -115,6 +132,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
             return r[(index-1)*15:index*15],len(r)
         elif table == "question":
             # preprocessing
+            content = None
             if key.get("content") is not None:
                 content = key.pop("content")
             else:
@@ -122,10 +140,10 @@ def search(key,table):#key is a dict variable used to search required row in tar
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
 
-            if content is not None:
-                questions = Question.query.filter_by(**key).filter(Question.content.like("%" + content + "%")).all()
-            else:
-                questions = Question.query.filter_by(**key).all()
+
+            questions = Question.query.filter_by(**key).filter(Question.content.like("%" + content + "%")
+                                                               if content is not None else Question.content.like("%%")).all()
+
             for question in questions:
                 question_dict = question.__dict__
 
@@ -139,11 +157,17 @@ def search(key,table):#key is a dict variable used to search required row in tar
             return r[(index-1)*15:index*15],len(r)
         elif table == "operation":
             # preprocessing
+            pet_name = None
             if key.get("surgery_begin_time") is not None:
                 key["surgery_begin_time"] = datetime.datetime.fromtimestamp(key["surgery_begin_time"])
             if key.get("release_time") is not None:
                 key["release_time"] = datetime.datetime.fromtimestamp(key["release_time"])
-            operations = Operation.query.filter_by(**key).all()
+            if "pet_name" in key:
+                pet_name=key.pop("pet_name")
+
+            operations = Operation.query.filter_by(**key).filter(Operation.pet_name.like("%"+pet_name+"%")
+                                                                 if pet_name is not None else
+                                                                 Operation.pet_name.like("%%")).all()
             for operation in operations:
                 operation_dict = operation.__dict__
                 operation_dict["surgery_begin_time"] = operation_dict["surgery_begin_time"].timestamp()
