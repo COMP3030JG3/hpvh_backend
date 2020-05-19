@@ -59,8 +59,8 @@ def search(key,table):#key is a dict variable used to search required row in tar
             for customer in customers:
                 customer_dict = customer.__dict__
                 if customer_dict["customer_image_path"] is not None:
-                    customer_dict.update({"avatar": customer_dict["customer_image_path"]})
-                    customer_dict["customer_image_path"] = "http://47.94.166.75:3000/api/customer/image/"+   str(customer_dict["id"])
+                    # customer_dict.update({"avatar": customer_dict["customer_image_path"]})
+                    customer_dict["customer_image_path"] = "/api/customer/image/"+   str(customer_dict["id"])
 
                 r.append(customer_dict)
             return r
@@ -70,13 +70,13 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 r = Employee.query.filter_by(**key).first()
                 if not check_password_hash(r.password_hash, password):
                     return 0
-            employees = Employee.query.filter_by(**key).all()
-            for employee in employees:
-                employee_dict = employee.__dict__
-                employee_dict.update({"avatar":""})
+            r = Employee.query.filter_by(**key).all()
+            # for employee in employees:
+            #     employee_dict = employee.__dict__
+            #     # employee_dict.update({"avatar":""})
 
-                r.append(employee_dict)
-            return r
+            #     r.append(employee_dict)
+            # return r
         elif table == "appointment":
             # preprocessing
             pet_name=None
@@ -97,7 +97,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]= "http://47.94.166.75:3000/api/appointment/image/" + str(temp["app_primary_key"])
+                    temp["pet_image_path"]= "/api/appointment/image/" + str(temp["app_primary_key"])
 
                 r.append(temp)
             # if index is None:
@@ -124,10 +124,12 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     answer_dict.update({"user_type":"customer"})
                     answer_dict.update({"username":answer.customer_answerer.__dict__.get("username")})
                     answer_dict.update({"user_id":answer_dict.pop("customer_id")})
+                    answer_dict.update({"avatar":answer.customer_answerer.__dict__.get("customer_image_path")})
                 elif answer.employee_id is not None:
                     answer_dict.update({"user_type": "employee"})
                     answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
                     answer_dict.update({"user_id": answer_dict.pop("employee_id")})
+                    answer_dict.update({"avatar":""})
                 r.append(answer_dict)
             return r[(index-1)*15:index*15],len(r)
         elif table == "question":
@@ -152,7 +154,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 question_dict.update({"username":question.questioner.__dict__.get("username")})
                 question_dict.update({"user_id":question_dict.get("questioner_id")})
                 question_dict.update({"replies" : len(question.answers.all())})
-
+                question_dict.update({"avatar": question.questioner.__dict__.get("customer_image_path")})
                 r.append(question_dict)
             return r[(index-1)*15:index*15],len(r)
         elif table == "operation":
