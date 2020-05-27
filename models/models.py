@@ -61,6 +61,7 @@ class Appointment(db.Model):#id is not primary key, do not have primary key in t
     address = db.Column(db.String(15),index=True)
     description = db.Column(db.String(5000))
     appointment_type = db.Column(db.String(30))
+    appointment_level = db.Column(db.Integer)
     appointment_status = db.Column(db.String(30))
     diagnosis = db.Column(db.String(5000))
     needOperation = db.Column(db.Boolean)

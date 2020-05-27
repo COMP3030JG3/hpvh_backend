@@ -529,7 +529,7 @@ def searchTimeSpan(key,table):#The key format should be {"column":"...","start":
                 temp["appointment_date"] = temp["appointment_date"].timestamp()
                 temp["date"] = temp["date"].timestamp()
                 if temp.get("pet_image_path") is not None:
-                    temp["pet_image_path"]=mp.imread(temp["pet_image_path"])
+                    temp["pet_image_path"]= "/api/appointment/image/" + str(temp["app_primary_key"])
 
                 r.append(temp)
             return sorted(r[(index - 1) * 15:index * 15], key=lambda item: item[orderBy], reverse=True)
