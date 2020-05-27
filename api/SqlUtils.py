@@ -1,6 +1,8 @@
 import base64
 import datetime
 import os
+from distutils.util import strtobool
+
 import matplotlib.image as mp
 import traceback
 from core import db
@@ -86,6 +88,8 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
             if "pet_name" in key:
                 pet_name = key.pop("pet_name")
+            if "needOperation" in key:
+                key["needOperation"] = bool(strtobool("True"))
 
             appointments = Appointment.query.filter_by(**key).filter(Appointment.pet_name.like("%"+pet_name+"%")
                                                                      if pet_name is not None else
@@ -113,6 +117,8 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 content = None
             if key.get("date") is not None:
                 key["date"] = datetime.datetime.fromtimestamp(key["date"])
+            if "unread" in key:
+                key["unread"] = bool(strtobool("True"))
 
             answers = Answer.query.filter_by(**key).filter(Answer.content.like("%" + content + "%")
                                                            if content is not None else Answer.content.like("%%") ).all()
@@ -124,7 +130,8 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     answer_dict.update({"user_type":"customer"})
                     answer_dict.update({"username":answer.customer_answerer.__dict__.get("username")})
                     answer_dict.update({"user_id":answer_dict.pop("customer_id")})
-                    answer_dict.update({"avatar":answer.customer_answerer.__dict__.get("customer_image_path")})
+                    answer_dict.update({"avatar":"/api/customer/image/" +
+                                                 str(answer.customer_answerer.__dict__.get("id"))})
                 elif answer.employee_id is not None:
                     answer_dict.update({"user_type": "employee"})
                     answer_dict.update({"username":answer.employee_answerer.__dict__.get("username")})
@@ -154,7 +161,8 @@ def search(key,table):#key is a dict variable used to search required row in tar
                 question_dict.update({"username":question.questioner.__dict__.get("username")})
                 question_dict.update({"user_id":question_dict.get("questioner_id")})
                 question_dict.update({"replies" : len(question.answers.all())})
-                question_dict.update({"avatar": question.questioner.__dict__.get("customer_image_path")})
+                question_dict.update({"avatar": "/api/customer/image/" +
+                                                str(question.questioner.__dict__.get("id"))})
                 r.append(question_dict)
             return r[(index-1)*15:index*15],len(r)
         elif table == "operation":
