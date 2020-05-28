@@ -65,7 +65,7 @@ def search(key,table):#key is a dict variable used to search required row in tar
                     customer_dict["customer_image_path"] = "/api/customer/image/"+   str(customer_dict["id"])
 
                 r.append(customer_dict)
-            return r
+            return r,len(r)
         elif table == "employee":
             if "password_hash" in key:
                 password=key.pop("password_hash")
