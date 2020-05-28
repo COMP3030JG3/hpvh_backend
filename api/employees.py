@@ -199,7 +199,16 @@ def employee_search(id):
 
     # level = current_employee.get('level')
     # if level == "administrator":
-    employees, length = DBUtil.search({'index': id}, 'employee')
+    url = request.url
+    para = re.findall(r'([^?&]*?)=', url)
+    value = re.findall(r'=([^?&]*)', url)
+
+    inpu = {}
+    inpu['index'] = id
+    for i in range(0, len(para)):
+        inpu[para[i]] = value[i]
+
+    employees, length = DBUtil.search(inpu, 'employee')
     if employees:
         for ee in employees:
             ee.pop("_sa_instance_state")

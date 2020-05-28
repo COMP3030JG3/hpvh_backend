@@ -245,25 +245,23 @@ def user_operation_get(id):
 
 # references :  https://blog.51cto.com/12080420/2400408
 def validate_picture():
-    total = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345789'
-    # 图片大小 130 x 50
+    total = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+    # Image size 130 x 50
     width = 130
     height = 50
-    # 生成一个新图片对象
+    # Generate a new image object
     im = Image.new('RGB', (width, height), 'white')
-    # 设置字体
-    font = ImageFont.truetype('\api\CALIFB.TTF', 40)
-    # font = ImageFont.load_default().font
-    # 创建draw对象
+    # set font
+    font = ImageFont.truetype('CALIFB', 40)
     draw = ImageDraw.Draw(im)
     str1 = ''
-    # 输入每一个文字
+    # input every characters
     for item in range(5):
         text = random.choice(total)
         str1 += text
         draw.text((5+random.randint(4, 7)+20*item, 5 +
         random.randint(3, 7)), text=text, fill='blue', font=font)
-    # 划几根干扰线
+    # Draw some interference lines
     for num in range(8):
         x1 = random.randint(0, width/2)
         y1 = random.randint(0, height/2)
@@ -271,7 +269,7 @@ def validate_picture():
         y2 = random.randint(height/2, height)
         draw.line(((x1, y1), (x2, y2)), fill='black', width=1)
 
-    # 模糊下，加个滤镜
+    # blur and add a filter
     im = im.filter(ImageFilter.FIND_EDGES)
     return im, str1
 
